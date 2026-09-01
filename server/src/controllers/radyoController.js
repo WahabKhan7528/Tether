@@ -34,7 +34,7 @@ exports.uploadTrack = async (req, res, next) => {
       isCompressed: true,
     });
 
-    await track.populate('uploadedBy', 'displayName profilePicture');
+    await track.populate('uploadedBy', 'name nickname avatarUrl');
     
     const trackResponse = track.toObject();
     delete trackResponse.audioData;
@@ -52,7 +52,7 @@ exports.getTracks = async (req, res, next) => {
   try {
     const tracks = await Track.find({ coupleId: req.user.coupleId })
       .select('-audioData')
-      .populate('uploadedBy', 'displayName profilePicture')
+      .populate('uploadedBy', 'name nickname avatarUrl')
       .sort({ createdAt: 1 });
 
     res.status(200).json({
@@ -121,9 +121,35 @@ exports.streamTrack = async (req, res, next) => {
     }
 
     res.set('Content-Type', track.contentType || 'audio/mpeg');
-    res.set('Content-Length', buffer.length);
+    res.set('Accept-Ranges', 'bytes');
     res.set('Cache-Control', 'public, max-age=31536000');
-    res.send(buffer);
+
+    const range = req.headers.range;
+
+    if (!range) {
+      res.set('Content-Length', buffer.length);
+      return res.send(buffer);
+    }
+
+    const parts = range.replace(/bytes=/, '').split('-');
+    const partialstart = parts[0];
+    const partialend = parts[1];
+
+    const start = parseInt(partialstart, 10);
+    const end = partialend ? parseInt(partialend, 10) : buffer.length - 1;
+    
+    if (start >= buffer.length || end >= buffer.length) {
+      res.set('Content-Range', `bytes */${buffer.length}`);
+      return res.status(416).send();
+    }
+    
+    const chunksize = (end - start) + 1;
+
+    res.status(206);
+    res.set('Content-Range', `bytes ${start}-${end}/${buffer.length}`);
+    res.set('Content-Length', chunksize);
+    
+    res.send(buffer.slice(start, end + 1));
   } catch (error) {
     next(error);
   }

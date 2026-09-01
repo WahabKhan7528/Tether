@@ -66,7 +66,7 @@ export default function Radyo() {
                     >
                       <div className="truncate font-medium">{track.name}</div>
                       <div className={`text-[10px] truncate mt-0.5 ${currentTrack?._id === track._id ? 'text-ethereal-surface/80' : 'text-ethereal-tertiary/60'}`}>
-                        Uploaded by {track.uploadedBy?.displayName || 'Unknown'}
+                        Uploaded by {track.uploadedBy?.nickname || track.uploadedBy?.name || 'Unknown'}
                       </div>
                     </button>
                     <button
