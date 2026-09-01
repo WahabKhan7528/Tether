@@ -43,7 +43,7 @@ const isProd = process.env.NODE_ENV === 'production';
 const BASE_COOKIE_OPTIONS = {
   httpOnly: true,              // JS cannot read these cookies
   secure: isProd,              // HTTPS only in production
-  sameSite: isProd ? 'strict' : 'lax', // CSRF mitigation
+  sameSite: isProd ? 'none' : 'lax', // 'none' required for cross-domain (Vercel -> Render)
 };
 
 /**

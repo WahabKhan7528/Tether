@@ -95,7 +95,7 @@ const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
   getSecret: () => process.env.JWT_ACCESS_SECRET || 'csrf-secret-fallback',
   cookieName: process.env.NODE_ENV === 'production' ? '__Host-psifi.x-csrf-token' : 'x-csrf-token',
   cookieOptions: {
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     secure:   process.env.NODE_ENV === 'production',
     httpOnly: true,
   },
