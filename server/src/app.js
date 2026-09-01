@@ -37,7 +37,7 @@ app.use(httpLogger);
 app.use(
   helmet({
     crossOriginResourcePolicy: {
-      policy: process.env.NODE_ENV === 'production' ? 'same-origin' : 'cross-origin',
+      policy: 'cross-origin',
     },
     contentSecurityPolicy: {
       directives: {
