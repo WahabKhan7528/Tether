@@ -1,0 +1,101 @@
+import axios from 'axios';
+
+/**
+ * Axios instance configured for Tether's cookie-based auth.
+ *
+ * Key decisions:
+ *   - withCredentials: true  → sends HttpOnly cookies on every request
+ *   - No Authorization header or localStorage token management
+ *   - 401 responses trigger a silent /auth/refresh call; if that also fails,
+ *     dispatches 'auth:logout' event so AuthContext can clear state
+ */
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
+  withCredentials: true,  // Required for HttpOnly cookie-based sessions
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// ─── Request Interceptor ───────────────────────────────────────────────────────
+// We forward the X-Request-ID echo header from the server for tracing.
+// For state-mutating requests (POST, PATCH, DELETE, PUT), we fetch and append the CSRF token.
+
+let csrfToken = null;
+
+api.interceptors.request.use(
+  async (config) => {
+    // Only attach CSRF token to mutating requests
+    const isMutating = ['post', 'patch', 'put', 'delete'].includes(config.method?.toLowerCase());
+
+    // Skip fetching CSRF token for endpoints that generate it or don't need it initially
+    const isExemptRoute = config.url?.includes('/csrf-token') || config.url?.includes('/auth/login') || config.url?.includes('/auth/signup') || config.url?.includes('/auth/refresh');
+
+    if (isMutating && !isExemptRoute) {
+      if (!csrfToken) {
+        try {
+          // Fetch token using a distinct axios instance or by bypassing the interceptor
+          const res = await axios.get(`${api.defaults.baseURL}/csrf-token`, {
+            withCredentials: true,
+          });
+          csrfToken = res.data?.data?.csrfToken;
+        } catch (err) {
+          console.error('[CSRF] Failed to fetch token', err);
+        }
+      }
+      if (csrfToken) {
+        config.headers['X-CSRF-Token'] = csrfToken;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ─── Response Interceptor — silent session refresh on 401 ─────────────────────
+let isRefreshing = false;
+let failedQueue = [];
+
+function processQueue(error) {
+  failedQueue.forEach((p) => (error ? p.reject(error) : p.resolve()));
+  failedQueue = [];
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const original = error.config;
+
+    // Only attempt refresh once per failed request, and not for auth routes themselves
+    const isAuthRoute = original?.url?.includes('/auth/');
+    if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
+      if (isRefreshing) {
+        // Queue the request until the in-flight refresh completes
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then(() => api(original))
+          .catch(Promise.reject);
+      }
+
+      original._retry = true;
+      isRefreshing = true;
+
+      try {
+        // Attempt to refresh — server rotates both cookies silently
+        await api.post('/auth/refresh');
+        processQueue(null);
+        return api(original); // Retry the original request
+      } catch (refreshError) {
+        processQueue(refreshError);
+        // Both access and refresh tokens are invalid — force logout
+        window.dispatchEvent(new Event('auth:logout'));
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+export default api;

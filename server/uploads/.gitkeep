@@ -1,0 +1,4 @@
+# uploads directory
+# Local image files are stored here when STORAGE_MODE=local
+# This directory is intentionally excluded from version control.
+# The directory itself is tracked via this .gitkeep file.

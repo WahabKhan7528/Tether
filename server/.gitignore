@@ -1,0 +1,9 @@
+node_modules/
+.env
+coverage/
+*.log
+
+# Local image uploads (STORAGE_MODE=local)
+# Keep the directory tracked (.gitkeep), exclude actual files
+uploads/*
+!uploads/.gitkeep

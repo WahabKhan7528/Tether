@@ -1,0 +1,186 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-surface: 236 218 200; /* Warm beige background, less white */
+    --color-surface-dim: 225 202 180; /* Slightly darker beige for cards */
+    --color-outline: 215 195 175; /* Warm Beige outline */
+    --color-primary: 165 123 90; /* Bronze for buttons/accents */
+    --color-primary-container: 230 215 195; /* Warm Beige for hover states */
+    --color-tertiary: 60 40 30; /* Dark brown for text */
+    --color-error: 239 68 68;
+  }
+
+  /* Happy Light Mode (Slate Blue) */
+  :root[data-mood="happy"] {
+    --color-surface: 241 245 249; /* slate-100 */
+    --color-surface-dim: 226 232 240; /* slate-200 */
+    --color-outline: 203 213 225; /* slate-300 */
+    --color-primary: 71 85 105; /* slate-600 */
+    --color-primary-container: 203 213 225; /* slate-300 */
+    --color-tertiary: 15 23 42; /* slate-900 */
+    --color-error: 239 68 68;
+  }
+
+  .dark {
+    --color-surface: 20 20 20;
+    --color-surface-dim: 30 30 30;
+    --color-outline: 44 44 44;
+    --color-primary: 165 123 90; /* #A57B5A - Darker Bronze/Caramel */
+    --color-primary-container: 51 51 51;
+    --color-tertiary: 245 245 245;
+    --color-error: 255 69 58;
+  }
+
+  /* Happy Dark Mode (Lavender) */
+  .dark[data-mood="happy"] {
+    /* Keep the charcoal slate background of regular dark mode */
+    --color-surface: 20 20 20;
+    --color-surface-dim: 30 30 30;
+    --color-outline: 70 50 90; /* Lavender outline */
+    --color-primary: 180 150 230; /* Bright lavender for accents */
+    --color-primary-container: 60 45 80; /* Muted lavender hover */
+    --color-tertiary: 240 230 255; /* Very light lavender text */
+    --color-error: 255 69 58;
+  }
+
+  body {
+    @apply bg-ethereal-surface text-ethereal-tertiary font-sans antialiased transition-colors duration-500;
+    min-height: 100vh;
+    padding-bottom: 70px;
+    /* Space for bottom nav on mobile */
+  }
+
+  @media (min-width: 768px) {
+    body {
+      padding-bottom: 0;
+    }
+  }
+
+  * {
+    @apply box-border;
+  }
+}
+
+@layer components {
+
+  /* ── Typography System ── */
+  .text-display {
+    @apply font-heading text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight leading-none;
+  }
+  
+  .text-h1 {
+    @apply font-heading text-4xl md:text-5xl font-semibold tracking-tight mb-2;
+  }
+  
+  .text-h2 {
+    @apply font-heading text-3xl md:text-4xl font-medium tracking-tight mb-2;
+  }
+  
+  .text-h3 {
+    @apply font-heading text-2xl font-medium tracking-normal mb-1;
+  }
+
+  .text-body-lg {
+    @apply font-sans text-lg leading-relaxed text-ethereal-tertiary/80;
+  }
+  
+  .text-body {
+    @apply font-sans text-base leading-relaxed text-ethereal-tertiary/70;
+  }
+  
+  .text-body-sm {
+    @apply font-sans text-sm leading-normal text-ethereal-tertiary/60;
+  }
+
+  .text-ui {
+    @apply font-sans text-sm font-semibold tracking-wide;
+  }
+  
+  .text-label {
+    @apply font-sans text-xs font-bold uppercase tracking-widest text-ethereal-tertiary/50;
+  }
+
+  /* ── Buttons ───────────────────────────────── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-ethereal-primary text-white font-bold rounded-full hover:bg-opacity-90 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed tracking-wide;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent text-ethereal-tertiary font-medium rounded-full border border-ethereal-outline hover:bg-ethereal-surface-dim/30 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-ethereal-tertiary font-medium rounded-full hover:bg-ethereal-surface-dim/20 active:scale-95 transition-all duration-200 disabled:opacity-50 tracking-wide;
+  }
+
+  /* ── Cards ─────────────────────────────────── */
+  .card {
+    @apply bg-ethereal-surface-dim/90 backdrop-blur-md rounded-3xl border border-ethereal-outline overflow-hidden shadow-ambient;
+  }
+
+  .card-hover {
+    @apply card transition-all duration-300 hover:-translate-y-1 cursor-pointer;
+  }
+
+  /* ── Form Fields ────────────────────────────── */
+  .input {
+    @apply w-full px-5 py-4 bg-ethereal-surface-dim/80 backdrop-blur-sm border border-ethereal-outline rounded-2xl text-ethereal-tertiary placeholder-ethereal-outline focus:outline-none focus:ring-1 focus:ring-ethereal-primary focus:border-ethereal-primary transition-all duration-300 text-lg;
+  }
+
+  .label {
+    @apply block text-xs font-semibold text-ethereal-tertiary mb-2 ml-1 uppercase tracking-widest;
+  }
+
+  .select {
+    @apply input appearance-none cursor-pointer;
+  }
+
+  .textarea {
+    @apply input resize-none;
+  }
+
+  /* ── Page Layout ────────────────────────────── */
+  .page-container {
+    @apply max-w-3xl mx-auto px-6 sm:px-16 py-8 sm:py-16;
+  }
+
+  .section-title {
+    @apply text-h1 text-ethereal-tertiary;
+  }
+
+  .section-subtitle {
+    @apply text-body-lg text-ethereal-tertiary/70;
+  }
+}
+
+/* ── Custom Scrollbar ─────────────────────── */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-primary), 0.4);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--color-primary), 0.7);
+}
+
+/* Hide scrollbar for sidebar */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

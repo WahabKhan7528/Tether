@@ -1,0 +1,3 @@
+@echo off
+echo Starting Tether...
+npm run dev

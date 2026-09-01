@@ -1,0 +1,20 @@
+import { useRadio } from '../context/RadioContext';
+import { useLocation } from 'react-router-dom';
+import RadyoPlayer from './RadyoPlayer';
+
+export default function GlobalRadioWidget() {
+  const { currentTrack } = useRadio();
+  const location = useLocation();
+
+  if (location.pathname === '/radyo' || location.pathname === '/login' || location.pathname === '/signup') {
+    return null;
+  }
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 group origin-bottom-right transition-transform duration-300 scale-[0.35] hover:scale-90 opacity-80 hover:opacity-100 drop-shadow-2xl">
+      <div className="w-[450px]">
+        <RadyoPlayer />
+      </div>
+    </div>
+  );
+}
