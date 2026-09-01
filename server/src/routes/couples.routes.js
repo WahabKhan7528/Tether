@@ -12,6 +12,8 @@ const {
   addBucketListItem,
   toggleBucketListItem,
   deleteBucketListItem,
+  addDateIdea,
+  deleteDateIdea,
 } = require('../controllers/couplesController');
 const { authenticate, requirePaired } = require('../middleware/auth');
 const validate = require('../middleware/validate');
@@ -43,6 +45,11 @@ const bucketListValidators = [
   body('title').trim().notEmpty().withMessage('Bucket list item title is required').isLength({ max: 120 }),
 ];
 
+const dateIdeaValidators = [
+  body('title').trim().notEmpty().withMessage('Idea title is required').isLength({ max: 120 }),
+  body('description').optional({ checkFalsy: true }).trim().isLength({ max: 300 }),
+];
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 // Get couple info (works even when not yet paired — returns { isPaired: false })
@@ -62,5 +69,9 @@ router.delete('/me/milestones/:itemId', requirePaired, validateObjectId('itemId'
 router.post('/me/bucket-list', requirePaired, bucketListValidators, validate, addBucketListItem);
 router.patch('/me/bucket-list/:itemId', requirePaired, validateObjectId('itemId'), toggleBucketListItem);
 router.delete('/me/bucket-list/:itemId', requirePaired, validateObjectId('itemId'), deleteBucketListItem);
+
+// ─── Date Ideas sub-resource ──────────────────────────────────────────────────
+router.post('/me/date-ideas', requirePaired, dateIdeaValidators, validate, addDateIdea);
+router.delete('/me/date-ideas/:itemId', requirePaired, validateObjectId('itemId'), deleteDateIdea);
 
 module.exports = router;

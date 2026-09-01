@@ -7,10 +7,12 @@ import api from '../api/axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CustomDatePicker from '../components/CustomDatePicker';
 import CustomDropdown from '../components/CustomDropdown';
+import LocationPickerModal from '../components/ui/LocationPickerModal';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ImagePlus, Check, MapPin, Calendar, FolderHeart, X, Sparkles } from 'lucide-react';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_MB = 10;
@@ -35,7 +37,9 @@ export default function EditMemory() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ title: '', description: '', dateTaken: '', location: '', categoryId: '' });
+  const socket = useSocket();
+  const [form, setForm] = useState({ title: '', description: '', dateTaken: '', location: '', categoryId: '', coordinates: { lat: null, lng: null } });
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [existingImages, setExistingImages] = useState([]);
   const [newFiles, setNewFiles] = useState([]);
   const [newPreviews, setNewPreviews] = useState([]);
@@ -64,6 +68,7 @@ export default function EditMemory() {
         description: memory.description || '',
         dateTaken: memory.dateTaken ? new Date(memory.dateTaken).toISOString().split('T')[0] : '',
         location: memory.location || '',
+        coordinates: memory.coordinates || { lat: null, lng: null },
         categoryId: memory.categoryId?._id || memory.categoryId || ''
       });
       setExistingImages(memory.images?.sort((a, b) => a.order - b.order) || []);
@@ -125,6 +130,7 @@ export default function EditMemory() {
         description: form.description || undefined,
         dateTaken: form.dateTaken || undefined,
         location: form.location || undefined,
+        coordinates: form.coordinates.lat !== null ? form.coordinates : undefined,
         categoryId: form.categoryId || null,
         images: existingImages.map((img, idx) => ({ ...img, order: idx })) // Re-order kept images
       });
@@ -143,6 +149,9 @@ export default function EditMemory() {
 
       await queryClient.invalidateQueries({ queryKey: ['memories'] });
       await queryClient.invalidateQueries({ queryKey: ['memory', id] });
+      await queryClient.invalidateQueries({ queryKey: ['memories-map'] });
+      if (socket) socket.emit('content_updated');
+      
       toast.success('Memory updated successfully');
       navigate('/memories');
     } catch (err) {
@@ -274,7 +283,12 @@ export default function EditMemory() {
                 />
               </div>
               <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center gap-2 pl-1"><MapPin size={14} /> Location</label>
+                <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center justify-between pl-1">
+                  <span className="flex items-center gap-2"><MapPin size={14} /> Location</span>
+                  <button type="button" onClick={() => setShowMapPicker(true)} className="text-xs text-ethereal-primary hover:underline font-semibold flex items-center gap-1">
+                    Select on Map
+                  </button>
+                </label>
                 <input
                   type="text"
                   className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all"
@@ -325,6 +339,16 @@ export default function EditMemory() {
         title="Remove Photo"
         message="Are you sure you want to remove this photo from the memory?"
         confirmText="Remove"
+      />
+
+      <LocationPickerModal
+        isOpen={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        initialLocation={form.location}
+        initialCoordinates={form.coordinates}
+        onSelect={({ location, coordinates }) => {
+          setForm(prev => ({ ...prev, location, coordinates }));
+        }}
       />
     </div>
   );

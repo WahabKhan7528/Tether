@@ -8,11 +8,13 @@ import { motion } from 'framer-motion';
 import api from '../api/axios';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
 
 export default function LetterDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const socket = useSocket();
   const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: letter, isLoading: loading, isError } = useQuery({
@@ -27,6 +29,7 @@ export default function LetterDetail() {
     mutationFn: () => api.delete(`/letters/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['letters'] });
+      if (socket) socket.emit('content_updated');
       toast.success('Letter deleted successfully');
       navigate('/letters');
     },

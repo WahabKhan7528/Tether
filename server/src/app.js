@@ -21,6 +21,7 @@ const reelRoutes      = require('./routes/reels.routes');
 const galleryRoutes   = require('./routes/gallery.routes');
 const letterRoutes    = require('./routes/letters.routes');
 const radyoRoutes     = require('./routes/radyo.routes');
+const promptsRoutes   = require('./routes/prompts.routes');
 
 const app = express();
 
@@ -157,6 +158,7 @@ app.use('/api/reels',      generalLimiter, reelRoutes);
 app.use('/api/gallery',    generalLimiter, galleryRoutes);
 app.use('/api/letters',    generalLimiter, letterRoutes);
 app.use('/api/radyo',      generalLimiter, radyoRoutes);
+app.use('/api/prompts',    generalLimiter, promptsRoutes);
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 // Used by Render keepalive pings and deployment readiness probes
@@ -166,7 +168,7 @@ app.get('/api/health', (req, res) =>
     data: {
       status:      'ok',
       service:     'Tether API',
-      storageMode: process.env.STORAGE_MODE || 'local',
+      storageMode: 'imagekit',
       env:         process.env.NODE_ENV || 'development',
       requestId:   req.id,
     },
@@ -187,3 +189,5 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 module.exports = app;
+
+// Trigger nodemon restart

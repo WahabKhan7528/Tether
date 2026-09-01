@@ -34,6 +34,8 @@ router.post(
     body('title').trim().notEmpty().withMessage('Title is required').isLength({ max: 120 }),
     body('description').optional().trim().isLength({ max: 2000 }),
     body('location').optional().trim().isLength({ max: 120 }),
+    body('coordinates.lat').optional({ nullable: true }).isNumeric(),
+    body('coordinates.lng').optional({ nullable: true }).isNumeric(),
     body('dateTaken').optional().isISO8601().withMessage('dateTaken must be a valid date'),
   ],
   validate,
@@ -47,6 +49,8 @@ router.patch(
     body('title').optional().trim().notEmpty().isLength({ max: 120 }),
     body('description').optional().trim().isLength({ max: 2000 }),
     body('location').optional().trim().isLength({ max: 120 }),
+    body('coordinates.lat').optional({ nullable: true }).isNumeric(),
+    body('coordinates.lng').optional({ nullable: true }).isNumeric(),
     body('dateTaken').optional().isISO8601().withMessage('dateTaken must be a valid date'),
     // NOTE: 'images' is intentionally excluded — image management uses dedicated upload endpoints
   ],

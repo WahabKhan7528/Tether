@@ -58,6 +58,14 @@ const coupleSchema = new mongoose.Schema(
       hugCount: { type: Number, default: 0 },
       kissCount: { type: Number, default: 0 },
     },
+    dateIdeas: [
+      {
+        title: { type: String, required: true },
+        description: { type: String, default: '' },
+        addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        createdAt: { type: Date, default: Date.now }
+      }
+    ],
   },
   { timestamps: true }
 );

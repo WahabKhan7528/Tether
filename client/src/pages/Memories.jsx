@@ -8,6 +8,7 @@ import MemoryViewer from '../components/MemoryViewer';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
 
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +40,7 @@ const ICON_OPTIONS = Object.keys(ICON_MAP);
 
 export default function Memories() {
   const queryClient = useQueryClient();
+  const socket = useSocket();
   const [selectedCategory, setSelectedCategory] = useState('');
   const [page, setPage] = useState(1);
   const [viewingMemory, setViewingMemory] = useState(null);
@@ -82,6 +84,7 @@ export default function Memories() {
       if (!editTarget) {
         handleCategoryChange(res.data.data._id);
       }
+      if (socket) socket.emit('content_updated');
       closeForm();
     },
     onError: (err) => {
@@ -96,6 +99,7 @@ export default function Memories() {
       if (selectedCategory === id) {
         handleCategoryChange('');
       }
+      if (socket) socket.emit('content_updated');
       closeForm();
       toast.success('Collection removed successfully');
       setCategoryToDelete(null);
@@ -110,6 +114,7 @@ export default function Memories() {
     mutationFn: (id) => deleteMemory(id),
     onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['memories'] });
+      if (socket) socket.emit('content_updated');
       toast.success('Memory removed successfully');
       setMemoryToDelete(null);
       if (viewingMemory && viewingMemory._id === id) {

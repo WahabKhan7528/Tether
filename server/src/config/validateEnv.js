@@ -1,6 +1,5 @@
 'use strict';
 
-const STORAGE_MODE = process.env.STORAGE_MODE || 'local';
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // JWT is now always required — bypass mode is removed
@@ -45,7 +44,7 @@ function validateEnv() {
     }
   });
 
-  console.log(`[Tether] Storage: Hybrid (ImageKit & R2) | Env: ${NODE_ENV} | Auth: JWT`);
+  console.log(`[Tether] Storage: ImageKit | Env: ${NODE_ENV} | Auth: JWT`);
 }
 
 module.exports = validateEnv;

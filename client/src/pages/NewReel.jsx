@@ -7,6 +7,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import CustomDropdown from '../components/CustomDropdown';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Camera, Music2, Link2, FolderHeart, PenLine, MessageSquare, Sparkles } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
 
 function detectPlatform(url) {
   if (!url) return 'other';
@@ -24,6 +25,7 @@ const PLATFORM_ICONS = {
 export default function NewReel() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const socket = useSocket();
   const [form, setForm] = useState({ url: '', platform: 'other', caption: '', note: '', categoryId: '' });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,6 +52,7 @@ export default function NewReel() {
         categoryId: form.categoryId || undefined,
       });
       await queryClient.invalidateQueries({ queryKey: ['reels'] });
+      if (socket) socket.emit('content_updated');
       navigate('/reels');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save reel. Please try again.');

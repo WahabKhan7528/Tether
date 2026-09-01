@@ -42,6 +42,7 @@ function formatCouple(couple, currentUserId) {
     anniversaryDate:    couple.anniversaryDate,
     milestones:         couple.milestones || [],
     bucketList:         couple.bucketList || [],
+    dateIdeas:          couple.dateIdeas || [],
     interactions:       couple.interactions || { hugCount: 0, kissCount: 0 },
     memberCount:        couple.members.length,
     partner:            partner ? formatPartner(partner, currentUserId) : null,
@@ -152,7 +153,7 @@ async function updateCouple(req, res, next) {
     }
 
     // Only safe scalar fields and full array replacements
-    const allowed = ['coupleNickname', 'anniversaryDate', 'relationshipStatus', 'coupleBio', 'milestones', 'bucketList'];
+    const allowed = ['coupleNickname', 'anniversaryDate', 'relationshipStatus', 'coupleBio', 'milestones', 'bucketList', 'dateIdeas'];
     const updates = {};
     console.log('Update couple called with req.body:', req.body);
     allowed.forEach((field) => {
@@ -311,6 +312,50 @@ async function deleteBucketListItem(req, res, next) {
   }
 }
 
+// ─── Date Ideas (Ideas Jar) ───────────────────────────────────────────────────
+
+async function addDateIdea(req, res, next) {
+  try {
+    const { title, description } = req.body;
+    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const couple = await Couple.findByIdAndUpdate(
+      coupleId,
+      {
+        $push: {
+          dateIdeas: {
+            title: title.trim(),
+            description: description?.trim() || '',
+            addedBy: req.user._id,
+          },
+        },
+      },
+      { new: true, runValidators: true }
+    ).populate('members', POPULATE_MEMBERS);
+
+    if (!couple) return next(createError('Couple not found', 404, 'NOT_FOUND'));
+
+    return res.status(201).json({ success: true, data: { couple: formatCouple(couple, req.user._id) } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function deleteDateIdea(req, res, next) {
+  try {
+    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const couple = await Couple.findByIdAndUpdate(
+      coupleId,
+      { $pull: { dateIdeas: { _id: req.params.itemId } } },
+      { new: true }
+    ).populate('members', POPULATE_MEMBERS);
+
+    if (!couple) return next(createError('Couple not found', 404, 'NOT_FOUND'));
+    return res.json({ success: true, data: { couple: formatCouple(couple, req.user._id) } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   getMyCouple,
   updateCouple,
@@ -320,4 +365,6 @@ module.exports = {
   addBucketListItem,
   toggleBucketListItem,
   deleteBucketListItem,
+  addDateIdea,
+  deleteDateIdea,
 };

@@ -50,6 +50,10 @@ const galleryPhotoSchema = new mongoose.Schema(
       maxlength: [120, 'Location cannot exceed 120 characters'],
       default: '',
     },
+    coordinates: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null }
+    },
   },
   { timestamps: true }
 );

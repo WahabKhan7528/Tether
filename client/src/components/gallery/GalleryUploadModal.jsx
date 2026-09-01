@@ -2,14 +2,19 @@ import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Upload, ImagePlus, MapPin, Calendar, Type, FileText, Check } from 'lucide-react';
 import api from '../../api/axios';
+import LocationPickerModal from '../ui/LocationPickerModal';
+import CustomDatePicker from '../CustomDatePicker';
+import { useSocket } from '../../context/SocketContext';
 
 export default function GalleryUploadModal({ onSuccess, onCancel }) {
+  const socket = useSocket();
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [done, setDone] = useState(false);
-  const [form, setForm] = useState({ title: '', caption: '', dateTaken: '', location: '' });
+  const [form, setForm] = useState({ title: '', caption: '', dateTaken: '', location: '', coordinates: { lat: null, lng: null } });
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFile = (f) => {
@@ -40,11 +45,15 @@ export default function GalleryUploadModal({ onSuccess, onCancel }) {
       if (form.caption) formData.append('caption', form.caption);
       if (form.dateTaken) formData.append('dateTaken', form.dateTaken);
       if (form.location) formData.append('location', form.location);
+      if (form.coordinates && form.coordinates.lat !== null) {
+        formData.append('coordinates', JSON.stringify(form.coordinates));
+      }
 
       await api.post('/gallery/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
 
+      if (socket) socket.emit('content_updated');
       setDone(true);
       setTimeout(() => onSuccess(), 800);
     } catch (err) {
@@ -156,12 +165,9 @@ export default function GalleryUploadModal({ onSuccess, onCancel }) {
               <div className="grid grid-cols-2 gap-4">
                 {/* Date */}
                 <div className="relative">
-                  <Calendar size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-ethereal-tertiary/40 pointer-events-none z-10" />
-                  <input
-                    type="date"
+                  <CustomDatePicker
                     value={form.dateTaken}
-                    onChange={(e) => setForm({ ...form, dateTaken: e.target.value })}
-                    className="w-full pl-10 pr-4 py-3 bg-ethereal-surface border border-ethereal-outline rounded-xl text-ethereal-tertiary focus:outline-none focus:border-ethereal-primary/50 transition-colors text-sm"
+                    onChange={(val) => setForm({ ...form, dateTaken: val })}
                   />
                 </div>
 
@@ -174,8 +180,15 @@ export default function GalleryUploadModal({ onSuccess, onCancel }) {
                     value={form.location}
                     onChange={(e) => setForm({ ...form, location: e.target.value })}
                     maxLength={120}
-                    className="w-full pl-10 pr-4 py-3 bg-ethereal-surface border border-ethereal-outline rounded-xl text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary/50 transition-colors text-sm"
+                    className="w-full pl-10 pr-20 py-3 bg-ethereal-surface border border-ethereal-outline rounded-xl text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary/50 transition-colors text-sm"
                   />
+                  <button 
+                    type="button" 
+                    onClick={() => setShowMapPicker(true)} 
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] uppercase font-bold tracking-wider text-ethereal-primary hover:underline"
+                  >
+                    Map
+                  </button>
                 </div>
               </div>
             </div>
@@ -205,6 +218,16 @@ export default function GalleryUploadModal({ onSuccess, onCancel }) {
           </div>
         </motion.div>
       </motion.div>
+      
+      <LocationPickerModal
+        isOpen={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        initialLocation={form.location}
+        initialCoordinates={form.coordinates}
+        onSelect={({ location, coordinates }) => {
+          setForm(prev => ({ ...prev, location, coordinates }));
+        }}
+      />
     </AnimatePresence>
   );
 }

@@ -75,10 +75,7 @@ exports.deleteTrack = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Track not found.' });
     }
 
-    // Delete from R2 if applicable
-    if (track.r2Key) {
-      await audioStorage.deleteFiles([track.r2Key]);
-    } else if (track.url && track.url.includes('/uploads/')) {
+    if (track.url && track.url.includes('/uploads/')) {
       // Fallback for old local files
       const filePath = path.join(UPLOADS_DIR, track.url.replace('/uploads/', ''));
       if (fs.existsSync(filePath)) {

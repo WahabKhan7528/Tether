@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const imageSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
-    key: { type: String, required: true }, // R2 object key
+    key: { type: String, required: true }, // object key
     order: { type: Number, default: 0 },
   }
 );
@@ -39,6 +39,10 @@ const memorySchema = new mongoose.Schema(
       trim: true,
       maxlength: [120, 'Location cannot exceed 120 characters'],
       default: '',
+    },
+    coordinates: {
+      lat: { type: Number, default: null },
+      lng: { type: Number, default: null }
     },
     images: {
       type: [imageSchema],

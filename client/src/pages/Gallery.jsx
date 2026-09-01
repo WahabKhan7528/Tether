@@ -9,6 +9,7 @@ import { Plus, Sparkles, Images, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
 
 import api from '../api/axios';
 
@@ -51,6 +52,7 @@ export default function Gallery() {
     onSuccess: () => {
       toast.success('Photo removed successfully');
       queryClient.invalidateQueries({ queryKey: ['gallery'] });
+      if (socket) socket.emit('content_updated');
       setPhotoToDelete(null);
     },
     onError: () => {
@@ -62,6 +64,7 @@ export default function Gallery() {
   const handleUploadSuccess = () => {
     setShowUpload(false);
     queryClient.invalidateQueries({ queryKey: ['gallery'] });
+    queryClient.invalidateQueries({ queryKey: ['gallery-map'] });
   };
 
   const handleDeleteGalleryPhoto = (imageId) => {

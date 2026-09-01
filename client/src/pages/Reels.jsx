@@ -10,8 +10,12 @@ import { Plus, Film, ChevronDown, Check, Sparkles, ChevronLeft, ChevronRight } f
 
 import CustomDropdown from '../components/CustomDropdown';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
+import { toast } from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
+
 export default function Reels() {
   const queryClient = useQueryClient();
+  const socket = useSocket();
   const [filters, setFilters] = useState({ categoryId: '', isDone: '' });
   const [page, setPage] = useState(1);
   const [reelToDelete, setReelToDelete] = useState(null);
@@ -44,6 +48,7 @@ export default function Reels() {
     mutationFn: (id) => deleteReel(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reels'] });
+      if (socket) socket.emit('content_updated');
       toast.success('Reel removed successfully');
       setReelToDelete(null);
     },

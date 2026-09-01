@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, memo, useCallback } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useSocket } from '../context/SocketContext';
 import { updateProfile, updatePartner, changePassword, uploadAvatar } from '../api/profile';
-import { updateCouple, addMilestone, deleteMilestone, addBucketListItem, toggleBucketListItem, deleteBucketListItem } from '../api/couples';
+import { updateCouple, addMilestone, deleteMilestone, addBucketListItem, toggleBucketListItem, deleteBucketListItem, getMyCouple } from '../api/couples';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CustomDatePicker from '../components/CustomDatePicker';
 import CustomColorPicker from '../components/CustomColorPicker';
@@ -289,6 +290,7 @@ function ChangePasswordModal({ onClose }) {
 
 export default function Profile() {
   const { user, refreshUser, updateUser, logout } = useAuth();
+  const socket = useSocket();
   const [activeTab, setActiveTab] = useState('me'); // 'me', 'partner', 'space', 'settings'
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'bucket' | 'milestone', idx: number }
@@ -351,16 +353,26 @@ export default function Profile() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['couple'] });
       refreshUser();
+      if (socket) socket.emit('content_updated');
     },
     onError: (err) => console.error('Failed to update couple', err)
   });
 
+  const { data: coupleQueryData } = useQuery({
+    queryKey: ['couple', 'me'],
+    queryFn: () => getMyCouple().then(res => res.data.data.couple),
+    enabled: !!user?.coupleId
+  });
+
   if (!user) return null;
-  const partner = user?.couple?.partner;
+  const partner = coupleQueryData?.partner;
 
   const handleProfileSave = useCallback((field, value) => {
     profileMutation.mutate({ [field]: value });
-  }, []);
+    if (field === 'currentStatus' && socket) {
+      socket.emit('status_update', { status: value });
+    }
+  }, [socket]);
 
   const handlePartnerSave = useCallback((field, value) => {
     partnerMutation.mutate({ [field]: value });
@@ -386,7 +398,10 @@ export default function Profile() {
   const handleSendHug = () => {
     const newCount = (user.hugsSent || 0) + 1;
     profileMutation.mutate({ hugsSent: newCount }, {
-      onSuccess: () => refreshUser()
+      onSuccess: () => {
+        refreshUser();
+        if (socket) socket.emit('send_hug');
+      }
     });
   };
 

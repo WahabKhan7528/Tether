@@ -76,7 +76,7 @@ async function getMemory(req, res, next) {
 
 async function createMemory(req, res, next) {
   try {
-    const { title, description, dateTaken, location, categoryId } = req.body;
+    const { title, description, dateTaken, location, categoryId, coordinates } = req.body;
 
     if (categoryId) {
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -92,6 +92,7 @@ async function createMemory(req, res, next) {
       description: description?.trim() || '',
       dateTaken: dateTaken ? new Date(dateTaken) : null,
       location: location?.trim() || '',
+      coordinates: coordinates || { lat: null, lng: null },
       categoryId: categoryId || null,
       createdBy: req.user._id,
     });
@@ -106,7 +107,7 @@ async function createMemory(req, res, next) {
 
 async function updateMemory(req, res, next) {
   try {
-    const { title, description, dateTaken, location, categoryId } = req.body;
+    const { title, description, dateTaken, location, categoryId, coordinates } = req.body;
     // NOTE: 'images' is intentionally excluded — image management uses dedicated
     // upload endpoints (localUpload / presignUpload + confirmUpload).
 
@@ -123,6 +124,7 @@ async function updateMemory(req, res, next) {
     if (description !== undefined) updates.description = description.trim();
     if (dateTaken !== undefined) updates.dateTaken = dateTaken ? new Date(dateTaken) : null;
     if (location !== undefined) updates.location = location.trim();
+    if (coordinates !== undefined) updates.coordinates = coordinates;
     if (categoryId !== undefined) updates.categoryId = categoryId || null;
     // images is NOT allowed here
 

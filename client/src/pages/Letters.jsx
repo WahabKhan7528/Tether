@@ -1,13 +1,32 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import BottomNav from '../components/BottomNav';
 import EmptyState from '../components/EmptyState';
 import { Mail, Plus, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useSocket } from '../context/SocketContext';
 
 import api from '../api/axios';
 
 export default function Letters() {
+  const socket = useSocket();
+  const [isPartnerTyping, setIsPartnerTyping] = useState(false);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleStart = () => setIsPartnerTyping(true);
+    const handleStop = () => setIsPartnerTyping(false);
+    
+    socket.on('partner_typing_letter', handleStart);
+    socket.on('partner_stopped_typing_letter', handleStop);
+    
+    return () => {
+      socket.off('partner_typing_letter', handleStart);
+      socket.off('partner_stopped_typing_letter', handleStop);
+    };
+  }, [socket]);
+
   const { data: letters = [], isLoading: loading } = useQuery({
     queryKey: ['letters'],
     queryFn: async () => {
@@ -33,6 +52,15 @@ export default function Letters() {
             <p className="text-ethereal-tertiary/60 font-sans text-xl md:text-2xl font-light tracking-wide max-w-xl mt-6 leading-relaxed">
               Beautiful words paired with your favorite moments.
             </p>
+            {isPartnerTyping && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 flex items-center gap-3 text-ethereal-primary bg-ethereal-primary/10 w-fit px-5 py-2.5 rounded-full border border-ethereal-primary/20 shadow-sm">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-ethereal-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-ethereal-primary"></span>
+                </span>
+                <span className="text-sm font-medium tracking-wide">Your partner is writing a letter...</span>
+              </motion.div>
+            )}
           </motion.div>
           
           <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2, duration: 0.5 }}>

@@ -61,6 +61,10 @@ async function start() {
     startKeepalive(PORT);
   });
 
+  const { initSocket } = require('./config/socket');
+  initSocket(server);
+
+
   process.on('SIGTERM', () => gracefulShutdown('SIGTERM', server));
   process.on('SIGINT',  () => gracefulShutdown('SIGINT',  server));
 }

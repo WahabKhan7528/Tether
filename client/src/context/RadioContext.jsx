@@ -4,6 +4,7 @@ import * as radyoApi from '../api/radyo';
 import api from '../api/axios';
 import toast from 'react-hot-toast';
 import { useAuth } from './AuthContext';
+import { useSocket } from './SocketContext';
 
 const RadioContext = createContext();
 
@@ -22,11 +23,16 @@ export function RadioProvider({ children }) {
   const isPublicPage = ['/login', '/signup', '/onboarding'].includes(location.pathname);
   const prevIsPublicPage = useRef(isPublicPage);
   const { user } = useAuth();
+  const socket = useSocket();
+  const remoteAction = useRef(false);
+  const initialLoadDone = useRef(false);
+
+  const coupleIdStr = typeof user?.coupleId === 'object' ? user.coupleId._id : user?.coupleId;
 
   // Load tracks when user's couple changes
   useEffect(() => {
     const loadTracks = async () => {
-      if (!user?.coupleId) {
+      if (!coupleIdStr) {
         setTracks([]);
         setCurrentTrack(null);
         return;
@@ -55,7 +61,7 @@ export function RadioProvider({ children }) {
       }
     };
     loadTracks();
-  }, [user?.coupleId]);
+  }, [coupleIdStr]);
 
   // Update audio source when currentTrack changes
   useEffect(() => {
@@ -68,7 +74,11 @@ export function RadioProvider({ children }) {
       setTimeout(() => {
         if (audioRef.current && !isPublicPage) {
           audioRef.current.load();
-          audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+          if (!initialLoadDone.current) {
+            initialLoadDone.current = true;
+          } else {
+            audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+          }
         }
       }, 50);
     }
@@ -101,6 +111,56 @@ export function RadioProvider({ children }) {
     return () => {};
   }, [audioSrc]);
 
+  // Socket sync logic
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePlay = () => {
+      remoteAction.current = true;
+      if (audioRef.current && !isPlaying) {
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
+      }
+    };
+
+    const handlePause = () => {
+      remoteAction.current = true;
+      if (audioRef.current && isPlaying) {
+        audioRef.current.pause();
+        setIsPlaying(false);
+      }
+    };
+
+    const handleChangeTrack = (data) => {
+      remoteAction.current = true;
+      const track = tracks.find(t => t._id === data.trackId);
+      if (track) {
+        setCurrentTrack(track);
+        localStorage.setItem('lastPlayedTrackId', track._id);
+      }
+    };
+
+    const handleSeek = (data) => {
+      remoteAction.current = true;
+      if (audioRef.current) {
+        audioRef.current.currentTime = data.time;
+        setCurrentTime(data.time);
+        setProgress((data.time / audioRef.current.duration) * 100 || 0);
+      }
+    };
+
+    socket.on('radyo_play', handlePlay);
+    socket.on('radyo_pause', handlePause);
+    socket.on('radyo_change_track', handleChangeTrack);
+    socket.on('radyo_seek', handleSeek);
+
+    return () => {
+      socket.off('radyo_play', handlePlay);
+      socket.off('radyo_pause', handlePause);
+      socket.off('radyo_change_track', handleChangeTrack);
+      socket.off('radyo_seek', handleSeek);
+    };
+  }, [socket, isPlaying, tracks]);
+
   const togglePlay = () => {
     if (!audioSrc) {
       toast.error('Please upload a tape first!', { icon: '📼' });
@@ -110,9 +170,11 @@ export function RadioProvider({ children }) {
     if (isPlaying) {
       audioRef.current?.pause();
       setIsPlaying(false);
+      if (socket) socket.emit('radyo_pause');
     } else {
       audioRef.current?.play().then(() => {
         setIsPlaying(true);
+        if (socket) socket.emit('radyo_play');
       }).catch(() => toast.error('Playback failed'));
     }
   };
@@ -134,6 +196,10 @@ export function RadioProvider({ children }) {
   const handleTrackSelect = (track) => {
     setCurrentTrack(track);
     localStorage.setItem('lastPlayedTrackId', track._id);
+    if (socket && !remoteAction.current) {
+      socket.emit('radyo_change_track', { trackId: track._id });
+    }
+    remoteAction.current = false;
   };
 
   const addTrack = async (file) => {
@@ -203,6 +269,10 @@ export function RadioProvider({ children }) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
       setProgress((time / audioRef.current.duration) * 100 || 0);
+      if (socket && !remoteAction.current) {
+         socket.emit('radyo_seek', { time });
+      }
+      remoteAction.current = false;
     }
   };
 

@@ -7,8 +7,10 @@ import api from '../api/axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import CustomDatePicker from '../components/CustomDatePicker';
 import CustomDropdown from '../components/CustomDropdown';
+import LocationPickerModal from '../components/ui/LocationPickerModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ImagePlus, Check, MapPin, Calendar, FolderHeart, Sparkles } from 'lucide-react';
+import { useSocket } from '../context/SocketContext';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_SIZE_MB = 10;
@@ -33,7 +35,9 @@ async function uploadLocal(memoryId, file, order, onProgress) {
 export default function NewMemory() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState({ title: '', description: '', dateTaken: '', location: '', categoryId: '' });
+  const socket = useSocket();
+  const [form, setForm] = useState({ title: '', description: '', dateTaken: '', location: '', categoryId: '', coordinates: { lat: null, lng: null } });
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [files, setFiles] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -74,6 +78,7 @@ export default function NewMemory() {
         description: form.description || undefined,
         dateTaken: form.dateTaken || undefined,
         location: form.location || undefined,
+        coordinates: form.coordinates.lat !== null ? form.coordinates : undefined,
         categoryId: form.categoryId || undefined,
       });
       const memoryId = memRes.data.data._id;
@@ -87,6 +92,8 @@ export default function NewMemory() {
       }
 
       await queryClient.invalidateQueries({ queryKey: ['memories'] });
+      await queryClient.invalidateQueries({ queryKey: ['memories-map'] });
+      if (socket) socket.emit('content_updated');
       navigate('/memories');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to save memory. Please try again.');
@@ -234,7 +241,12 @@ export default function NewMemory() {
                 />
               </div>
               <div className="flex-1 space-y-2">
-                <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center gap-2 pl-1"><MapPin size={14} /> Location</label>
+                <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center justify-between pl-1">
+                  <span className="flex items-center gap-2"><MapPin size={14} /> Location</span>
+                  <button type="button" onClick={() => setShowMapPicker(true)} className="text-xs text-ethereal-primary hover:underline font-semibold flex items-center gap-1">
+                    Select on Map
+                  </button>
+                </label>
                 <input
                   type="text"
                   className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all"
@@ -274,6 +286,16 @@ export default function NewMemory() {
           </div>
         </form>
       </div>
+
+      <LocationPickerModal
+        isOpen={showMapPicker}
+        onClose={() => setShowMapPicker(false)}
+        initialLocation={form.location}
+        initialCoordinates={form.coordinates}
+        onSelect={({ location, coordinates }) => {
+          setForm(prev => ({ ...prev, location, coordinates }));
+        }}
+      />
     </div>
   );
 }

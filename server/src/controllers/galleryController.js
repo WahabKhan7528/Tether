@@ -55,6 +55,7 @@ async function getGallery(req, res, next) {
           caption:   '',
           dateTaken: memory.dateTaken,
           location:  memory.location,
+          coordinates: memory.coordinates,
           createdAt: memory.createdAt,
         });
       });
@@ -70,6 +71,7 @@ async function getGallery(req, res, next) {
       caption:    photo.caption,
       dateTaken:  photo.dateTaken,
       location:   photo.location,
+      coordinates: photo.coordinates,
       uploadedBy: photo.uploadedBy,
       createdAt:  photo.createdAt,
     }));
@@ -102,6 +104,14 @@ async function uploadGalleryPhoto(req, res, next) {
     }
 
     const { title = '', caption = '', dateTaken, location = '' } = req.body;
+    let coordinates = { lat: null, lng: null };
+    if (req.body.coordinates) {
+      try {
+        coordinates = typeof req.body.coordinates === 'string' 
+          ? JSON.parse(req.body.coordinates) 
+          : req.body.coordinates;
+      } catch (e) { }
+    }
 
     const key = `gallery/${req.user.coupleId}/${req.file.filename}`;
     const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
@@ -116,6 +126,7 @@ async function uploadGalleryPhoto(req, res, next) {
       caption: caption.trim(),
       dateTaken: dateTaken ? new Date(dateTaken) : null,
       location: location.trim(),
+      coordinates,
     });
 
     return res.status(201).json({ success: true, data: photo });

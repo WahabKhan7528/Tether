@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import BottomNav from '../components/BottomNav';
@@ -9,6 +9,7 @@ import { Save, ImagePlus, Eye, Edit2, X, ArrowLeft, ArrowRight } from 'lucide-re
 import api from '../api/axios';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
+import { useSocket } from '../context/SocketContext';
 
 const TEMPLATES = [
   { id: 'classic', label: 'Classic', desc: 'Elegant and centered' },
@@ -31,6 +32,10 @@ export default function LetterEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const socket = useSocket();
+
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
 
   const [isEditing, setIsEditing] = useState(!!id);
   const [isPreview, setIsPreview] = useState(false);
@@ -53,6 +58,36 @@ export default function LetterEditor() {
       fetchLetter();
     }
   }, [id]);
+
+  useEffect(() => {
+    if (!socket || !body) return;
+    
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      socket.emit('typing_letter_start');
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      socket.emit('typing_letter_stop');
+    }, 2000);
+
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [body, socket]);
+
+  useEffect(() => {
+    return () => {
+      if (isTypingRef.current && socket) {
+        socket.emit('typing_letter_stop');
+      }
+    };
+  }, [socket]);
 
   const fetchLetter = async () => {
     try {
@@ -110,6 +145,7 @@ export default function LetterEditor() {
         if (id) {
           await queryClient.invalidateQueries({ queryKey: ['letter', id] });
         }
+        if (socket) socket.emit('content_updated');
         toast.success(id ? 'Letter updated successfully' : 'Letter saved successfully');
         navigate(`/letters/${data.data._id}`);
       } else {

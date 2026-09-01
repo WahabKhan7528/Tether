@@ -99,7 +99,7 @@ const userSchema = new mongoose.Schema(
     // Displayed to partner on the dashboard. Default is 'happy'.
     currentStatus: {
       type: String,
-      enum: ['happy', 'sad', 'busy', 'sleeping'],
+      enum: ['happy', 'sad', 'busy', 'sleeping', 'stressed', 'tired', 'sick', 'energetic', 'romantic', 'angry', 'relaxed'],
       default: 'happy',
     },
 

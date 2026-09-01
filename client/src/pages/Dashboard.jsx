@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -13,6 +14,9 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { motion } from 'framer-motion';
 import { Camera, Film, Images, BookHeart, CalendarHeart, Sparkles, Clock, Heart, Compass, FolderHeart, ArrowRight, Leaf, Smile, Frown, User, Users, ListTodo, Check, Star, Mail, Copy } from 'lucide-react';
 import PartnerStatusWidget from '../components/PartnerStatusWidget';
+import IdeasJar from '../components/IdeasJar';
+import MapTab from '../components/MapTab';
+import PromptTab from '../components/PromptTab';
 
 function daysBetween(date1, date2) {
   const d1 = new Date(date1);
@@ -34,6 +38,7 @@ function capitalize(str) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
 
   const results = useQueries({
     queries: [
@@ -173,17 +178,55 @@ export default function Dashboard() {
               </div>
             )}
             
-            <PartnerStatusWidget partnerName={partnerName} status={partnerStatus} />
+            <PartnerStatusWidget partnerName={partnerName} initialPartnerStatus={partnerStatus} />
           </motion.div>
         </div>
 
-        {/* Stats & Quick Links */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="flex flex-col gap-6 mb-16"
-        >
+        {/* --- TABS NAVIGATION --- */}
+        <div className="flex items-center justify-center mb-12 px-4 relative z-30">
+          <div className="flex items-center gap-1 sm:gap-2 p-1.5 sm:p-2 bg-ethereal-surface-dim/60 backdrop-blur-xl border border-ethereal-outline/50 rounded-full shadow-ambient overflow-x-auto scrollbar-hide max-w-full">
+            {[
+              { id: 'overview', label: 'Overview', icon: Heart },
+              { id: 'ideas', label: 'Ideas Jar', icon: Sparkles },
+              { id: 'map', label: 'Our Places', icon: Compass },
+              { id: 'prompts', label: 'Daily Prompt', icon: BookHeart }
+            ].map(tab => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`relative flex items-center gap-2 px-4 sm:px-6 py-2.5 rounded-full text-sm font-semibold transition-colors duration-300 whitespace-nowrap z-10 ${
+                    isActive
+                      ? 'text-white'
+                      : 'text-ethereal-tertiary/60 hover:text-ethereal-tertiary hover:bg-ethereal-tertiary/5'
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="dashboardTabBackground"
+                      className="absolute inset-0 bg-ethereal-primary rounded-full shadow-lg shadow-ethereal-primary/30 -z-10"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                    />
+                  )}
+                  <tab.icon size={16} className="relative z-10" />
+                  <span className="relative z-10">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {activeTab === 'overview' && (
+          <>
+            <motion.div
+              key="overview"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex flex-col gap-6 mb-16"
+          >
           {/* Premium Stats Bar (Bento Grid) */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
             {(() => {
@@ -549,6 +592,26 @@ export default function Dashboard() {
               </div>
             </div>
           </motion.section>
+        )}
+          </>
+        )}
+        
+        {activeTab === 'ideas' && (
+          <motion.div key="ideas" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full">
+             <IdeasJar couple={couple} />
+          </motion.div>
+        )}
+
+        {activeTab === 'map' && (
+          <motion.div key="map" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full">
+             <MapTab />
+          </motion.div>
+        )}
+
+        {activeTab === 'prompts' && (
+          <motion.div key="prompts" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full">
+             <PromptTab partnerName={partnerName} />
+          </motion.div>
         )}
       </div>
     </div>
