@@ -37,7 +37,7 @@ const ik = new ImageKit({
  */
 async function uploadFile({ buffer, fileName, folder, tags = [] }) {
   const response = await ik.upload({
-    file: buffer,
+    file: buffer.toString('base64'),
     fileName,
     folder,
     tags,
