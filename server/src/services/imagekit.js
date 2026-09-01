@@ -17,7 +17,7 @@
  * Folder structure: tether/{coupleId}/gallery/ | tether/{coupleId}/avatars/
  */
 
-const ImageKit = require('@imagekit/nodejs');
+const ImageKit = require('imagekit');
 
 const ik = new ImageKit({
   publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
