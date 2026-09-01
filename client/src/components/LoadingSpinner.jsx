@@ -46,12 +46,11 @@ export default function LoadingSpinner({ size = 'md', className = '' }) {
 export function FullPageLoader() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-ethereal-surface">
-      <div className="relative flex items-center justify-center mb-8">
-        <Sparkles size={18} className="text-ethereal-primary/40 absolute animate-pulse" />
-        <LoadingSpinner size="lg" />
+      <div className="text-ethereal-primary mb-4">
+        <NatureDotsLoader size="lg" />
       </div>
       <p className="text-ethereal-tertiary/60 font-heading italic text-xs tracking-[0.2em] uppercase animate-pulse">
-        Loading Tether...
+        Closer, Despite The Distance
       </p>
     </div>
   );
