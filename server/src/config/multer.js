@@ -96,7 +96,7 @@ const AUDIO_ALLOWED_MIME = [
   'audio/mp4',  // .m4a
   'audio/x-m4a'
 ];
-const AUDIO_MAX_SIZE = 20 * 1024 * 1024; // 20 MB
+const AUDIO_MAX_SIZE = 10 * 1024 * 1024; // 10 MB
 
 /**
  * Create a Multer instance that saves audio to disk.
