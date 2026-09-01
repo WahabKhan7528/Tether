@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Camera, PlayCircle, Library, Mail, UserCircle, Radio, Volume2, VolumeX } from 'lucide-react';
-import { motion } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
 import { useRadio } from '../context/RadioContext';
 
@@ -41,23 +40,18 @@ export default function BottomNav() {
             >
               {({ isActive }) => (
                 <div className="relative flex flex-col items-center justify-center w-full h-full">
-                  <motion.div
-                    animate={isActive ? { y: -4, scale: 1.1 } : { y: 0, scale: 1 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className={`relative z-10 flex items-center justify-center ${
-                      isActive ? 'text-ethereal-primary drop-shadow-[0_0_8px_rgba(255,255,255,0.1)]' : 'text-ethereal-tertiary/50 hover:text-ethereal-tertiary'
+                  <div
+                    className={`relative z-10 flex items-center justify-center transition-all duration-200 ${
+                      isActive
+                        ? 'text-ethereal-primary drop-shadow-[0_0_8px_rgba(255,255,255,0.1)] scale-110 -translate-y-1'
+                        : 'text-ethereal-tertiary/50 hover:text-ethereal-tertiary scale-100 translate-y-0'
                     }`}
                   >
                     <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
-                  </motion.div>
-                  
+                  </div>
+
                   {isActive && (
-                    <motion.div
-                      layoutId="bottom-nav-indicator"
-                      className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-ethereal-primary"
-                      initial={false}
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
+                    <span className="absolute bottom-1.5 w-1.5 h-1.5 rounded-full bg-ethereal-primary" />
                   )}
                 </div>
               )}

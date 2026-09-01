@@ -1,6 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect, lazy, Suspense } from 'react';
-import LocomotiveScroll from 'locomotive-scroll';
+import { lazy, Suspense } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { RadioProvider } from './context/RadioContext';
@@ -10,6 +9,8 @@ import PairedRoute from './components/PairedRoute';
 import BackgroundTheme from './components/BackgroundTheme';
 import GlobalRadioWidget from './components/GlobalRadioWidget';
 import LoadingSpinner, { FullPageLoader } from './components/LoadingSpinner';
+import PageChangeLoader from './components/PageChangeLoader';
+
 
 // ─── Code-Split Pages ─────────────────────────────────────────────────────────
 const Login = lazy(() => import('./pages/Login'));
@@ -29,13 +30,6 @@ const Profile = lazy(() => import('./pages/Profile'));
 const Radyo = lazy(() => import('./pages/Radyo'));
 
 export default function App() {
-  useEffect(() => {
-    const locomotiveScroll = new LocomotiveScroll();
-    return () => {
-      if (locomotiveScroll) locomotiveScroll.destroy();
-    };
-  }, []);
-
   return (
     <BrowserRouter>
       <ThemeProvider>
@@ -74,6 +68,7 @@ export default function App() {
             }}
           />
 
+          <PageChangeLoader />
           <RadioProvider>
             <Suspense fallback={<FullPageLoader />}>
               <Routes>

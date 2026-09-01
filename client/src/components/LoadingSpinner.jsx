@@ -1,4 +1,6 @@
-import { Sparkles, Leaf } from 'lucide-react';
+import { Sparkles, Leaf, Flower } from 'lucide-react';
+import { motion } from 'framer-motion';
+
 
 export default function LoadingSpinner({ size = 'md', className = '' }) {
   const sizeClass = { sm: 'w-6 h-6', md: 'w-10 h-10', lg: 'w-16 h-16' }[size];
@@ -62,6 +64,30 @@ export function ThreeDotsLoader({ size = 'sm' }) {
       <div className={`${sizeClass} rounded-full bg-current animate-bounce`} style={{ animationDelay: '0ms' }}></div>
       <div className={`${sizeClass} rounded-full bg-current animate-bounce`} style={{ animationDelay: '150ms' }}></div>
       <div className={`${sizeClass} rounded-full bg-current animate-bounce`} style={{ animationDelay: '300ms' }}></div>
+    </div>
+  );
+}
+
+export function NatureDotsLoader({ size = 'sm' }) {
+  const iconSize = { sm: 16, md: 24, lg: 32 }[size];
+  
+  const transition = {
+    duration: 1.2,
+    repeat: Infinity,
+    ease: "easeInOut"
+  };
+
+  return (
+    <div className="flex space-x-3 justify-center items-center h-full py-2">
+      <motion.div animate={{ y: [0, -8, 0] }} transition={{ ...transition, delay: 0 }}>
+        <Leaf size={iconSize} strokeWidth={1.5} />
+      </motion.div>
+      <motion.div animate={{ y: [0, -8, 0] }} transition={{ ...transition, delay: 0.2 }}>
+        <Flower size={iconSize} strokeWidth={1.5} />
+      </motion.div>
+      <motion.div animate={{ y: [0, -8, 0] }} transition={{ ...transition, delay: 0.4 }}>
+        <Leaf size={iconSize} strokeWidth={1.5} className="scale-x-[-1]" />
+      </motion.div>
     </div>
   );
 }

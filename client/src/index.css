@@ -48,11 +48,22 @@
     --color-error: 255 69 58;
   }
 
+  html {
+    scroll-behavior: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-ethereal-surface text-ethereal-tertiary font-sans antialiased transition-colors duration-500;
     min-height: 100vh;
     padding-bottom: 70px;
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
     /* Space for bottom nav on mobile */
+  }
+
+  img, video {
+    content-visibility: auto;
   }
 
   @media (min-width: 768px) {
@@ -183,4 +194,23 @@
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (max-width: 767px) {
+  *, *::before, *::after {
+    backface-visibility: hidden;
+  }
 }

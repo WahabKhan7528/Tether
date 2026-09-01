@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Leaf, Flower2, Flower } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { Leaf } from 'lucide-react';
 
 const LavenderIcon = ({ size = 24, className = '', fill = 'currentColor', strokeWidth = 1 }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={fill} stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -20,6 +20,10 @@ const CherryBlossomIcon = ({ size = 24, className = '', fill = 'currentColor', s
 );
 
 export default function FallingLeaves({ count = 15, type = 'leaf', colorClass = 'text-ethereal-surface-dim dark:text-ethereal-primary' }) {
+  const reduceMotion = useReducedMotion();
+
+  if (reduceMotion) return null;
+
   // Generate a memoized array of random properties for our leaves
   const leaves = useMemo(() => {
     return Array.from({ length: count }).map((_, i) => ({

@@ -20,6 +20,9 @@ export default function BackgroundTheme() {
   const { theme } = useTheme();
   const location = useLocation();
 
+  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   const isAuthPage = ['/login', '/signup', '/onboarding'].includes(location.pathname);
 
   // We default to 'sad' for the traditional bronze aesthetic unless explicitly 'happy'
@@ -95,6 +98,7 @@ export default function BackgroundTheme() {
   }
 
   const isRadyoPage = location.pathname === '/radyo';
+  const shouldRenderDecorations = !isMobile && !prefersReducedMotion;
 
   if (isRadyoPage) {
     let radyoBgSrc;
@@ -111,7 +115,7 @@ export default function BackgroundTheme() {
             key={radyoBgSrc}
             src={radyoBgSrc}
             alt="Floral Background"
-            className="absolute inset-0 w-full h-full object-cover opacity-80"
+            className="absolute inset-0 w-full h-full object-cover opacity-80 will-change-auto"
           />
         </div>
       </>
@@ -120,14 +124,14 @@ export default function BackgroundTheme() {
 
   return (
     <>
-      <FallingLeaves count={35} type={leavesType} colorClass={leavesColorClass} />
-      
+      {shouldRenderDecorations && <FallingLeaves count={35} type={leavesType} colorClass={leavesColorClass} />}
+
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <img
           key={treeSrc}
           src={treeSrc}
           alt=""
-          className={`absolute bottom-0 right-0 w-auto max-w-none ${heightClass} ${translateYClass} ${opacityClass} ${translateXClass}`}
+          className={`absolute bottom-0 right-0 w-auto max-w-none ${heightClass} ${translateYClass} ${opacityClass} ${translateXClass} will-change-auto`}
         />
       </div>
     </>
