@@ -10,6 +10,7 @@ router.use(authenticate, requirePaired);
 const upload = createAudioUpload('radyo', (req) => req.user.coupleId);
 
 router.get('/', radyoController.getTracks);
+router.get('/stream/:id', radyoController.streamTrack);
 router.post('/upload', upload.single('audio'), radyoController.uploadTrack);
 router.delete('/:id', radyoController.deleteTrack);
 

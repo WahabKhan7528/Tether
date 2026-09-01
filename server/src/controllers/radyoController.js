@@ -1,7 +1,13 @@
 const path = require('path');
 const fs = require('fs');
+const util = require('util');
+const zlib = require('zlib');
+const mongoose = require('mongoose');
 const Track = require('../models/Track');
 const { UPLOADS_DIR } = require('../config/multer');
+
+const gzip = util.promisify(zlib.gzip);
+const gunzip = util.promisify(zlib.gunzip);
 
 const { audioStorage } = require('../services/storage');
 
@@ -14,24 +20,26 @@ exports.uploadTrack = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'No audio file uploaded.' });
     }
 
-    // Upload to ImageKit (since audioStorage points to ImageKit Provider)
-    const { url, key } = await audioStorage.uploadBuffer({
-      buffer: req.file.buffer,
-      originalname: req.file.originalname,
-      folder: `tether/${req.user.coupleId}/radyo`,
-    });
+    const compressedBuffer = await gzip(req.file.buffer);
+    const trackId = new mongoose.Types.ObjectId();
 
     const track = await Track.create({
+      _id: trackId,
       coupleId: req.user.coupleId,
       uploadedBy: req.user._id,
       name: req.file.originalname,
-      url: url,
-      r2Key: key, // Reusing r2Key field name for the ImageKit fileId
+      url: `/api/radyo/stream/${trackId}`,
+      audioData: compressedBuffer,
+      contentType: req.file.mimetype,
+      isCompressed: true,
     });
 
     await track.populate('uploadedBy', 'displayName profilePicture');
+    
+    const trackResponse = track.toObject();
+    delete trackResponse.audioData;
 
-    res.status(201).json({ success: true, data: track });
+    res.status(201).json({ success: true, data: trackResponse });
   } catch (error) {
     next(error);
   }
@@ -43,6 +51,7 @@ exports.uploadTrack = async (req, res, next) => {
 exports.getTracks = async (req, res, next) => {
   try {
     const tracks = await Track.find({ coupleId: req.user.coupleId })
+      .select('-audioData')
       .populate('uploadedBy', 'displayName profilePicture')
       .sort({ createdAt: 1 });
 
@@ -83,6 +92,38 @@ exports.deleteTrack = async (req, res, next) => {
       success: true,
       data: {},
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Stream a track's audio data
+ */
+exports.streamTrack = async (req, res, next) => {
+  try {
+    const track = await Track.findOne({ _id: req.params.id });
+
+    if (!track) {
+      return res.status(404).json({ success: false, message: 'Track not found.' });
+    }
+
+    if (!track.audioData) {
+       if (track.url && !track.url.startsWith('/api/radyo/stream')) {
+         return res.redirect(track.url);
+       }
+       return res.status(404).json({ success: false, message: 'Audio data not found.' });
+    }
+
+    let buffer = track.audioData;
+    if (track.isCompressed) {
+      buffer = await gunzip(buffer);
+    }
+
+    res.set('Content-Type', track.contentType || 'audio/mpeg');
+    res.set('Content-Length', buffer.length);
+    res.set('Cache-Control', 'public, max-age=31536000');
+    res.send(buffer);
   } catch (error) {
     next(error);
   }

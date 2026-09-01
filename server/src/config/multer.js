@@ -96,7 +96,7 @@ const AUDIO_ALLOWED_MIME = [
   'audio/mp4',  // .m4a
   'audio/x-m4a'
 ];
-const AUDIO_MAX_SIZE = 10 * 1024 * 1024; // 10 MB
+const AUDIO_MAX_SIZE = 15 * 1024 * 1024; // 15 MB to fit within MongoDB 16MB BSON limit
 
 /**
  * Create a Multer instance that saves audio to disk.

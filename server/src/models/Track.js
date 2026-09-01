@@ -19,7 +19,17 @@ const trackSchema = new mongoose.Schema({
   },
   url: {
     type: String,
-    required: true,
+    // Optional for backward compatibility with older files
+  },
+  audioData: {
+    type: Buffer,
+  },
+  contentType: {
+    type: String,
+  },
+  isCompressed: {
+    type: Boolean,
+    default: false,
   },
 }, {
   timestamps: true,
