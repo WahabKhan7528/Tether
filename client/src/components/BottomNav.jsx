@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Camera, PlayCircle, Library, Mail, UserCircle, Radio } from 'lucide-react';
+import { Home, Camera, PlayCircle, Library, Mail, UserCircle, Radio, Volume2, VolumeX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ThemeToggle from './ThemeToggle';
+import { useRadio } from '../context/RadioContext';
 
 const navLinks = [
   { to: '/dashboard', label: 'Home', icon: Home },
@@ -14,9 +15,18 @@ const navLinks = [
 ];
 
 export default function BottomNav() {
+  const { isPlaying, togglePlay } = useRadio();
+
   return (
     <>
-      <div className="md:hidden fixed top-6 right-6 z-50">
+      <div className="md:hidden fixed top-6 right-6 z-50 flex items-center gap-3">
+        <button
+          onClick={togglePlay}
+          className="w-10 h-10 rounded-full bg-ethereal-surface border border-ethereal-outline flex items-center justify-center text-ethereal-tertiary hover:text-ethereal-primary shadow-[0_4px_0_rgba(0,0,0,0.3)] active:shadow-none active:translate-y-1 transition-all"
+          title={isPlaying ? 'Mute' : 'Unmute'}
+        >
+          {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
+        </button>
         <ThemeToggle />
       </div>
       <div className="md:hidden fixed bottom-6 left-6 right-6 mx-auto max-w-[400px] bg-ethereal-surface-dim/90 backdrop-blur-xl border border-ethereal-outline z-50 rounded-full shadow-2xl">
