@@ -15,7 +15,7 @@ import {
   Calendar, Palette, Smile, Shield, Info,
   Activity, Frown, Meh, Settings, Users,
   MapPin, Plus, Trash2, Send, Star,
-  ListTodo, HeartHandshake
+  ListTodo, HeartHandshake, LogOut
 } from 'lucide-react';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -288,7 +288,7 @@ function ChangePasswordModal({ onClose }) {
 // ─── Main Profile Page ─────────────────────────────────────────────────────────
 
 export default function Profile() {
-  const { user, refreshUser, updateUser } = useAuth();
+  const { user, refreshUser, updateUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('me'); // 'me', 'partner', 'space', 'settings'
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null); // { type: 'bucket' | 'milestone', idx: number }
@@ -489,6 +489,14 @@ export default function Profile() {
         <div 
           className="absolute inset-0 opacity-[0.2] dark:opacity-[0.08] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-ethereal-primary/60 via-ethereal-surface to-transparent pointer-events-none transition-colors duration-1000"
         />
+
+        <button 
+          onClick={logout}
+          className="md:hidden absolute top-6 right-6 p-2 rounded-full bg-ethereal-surface-dim text-ethereal-tertiary hover:text-ethereal-error hover:bg-ethereal-error/10 transition-all border border-ethereal-outline shadow-sm"
+          aria-label="Log out"
+        >
+          <LogOut size={20} />
+        </button>
 
         <AvatarPicker
           avatarUrl={user.avatarUrl}
@@ -933,13 +941,22 @@ export default function Profile() {
                 <div className="pt-6 border-t border-ethereal-outline/10">
                   <h3 className="text-lg font-heading font-medium text-ethereal-tertiary mb-1">Account Security</h3>
                   <p className="text-sm text-ethereal-tertiary/50 mb-4">Manage your password and security preferences.</p>
-                  <button
-                    onClick={() => setShowPasswordModal(true)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-ethereal-surface-dim hover:bg-ethereal-outline/30 text-ethereal-tertiary font-medium transition-colors"
-                  >
-                    <Lock size={18} className="text-ethereal-tertiary/60" />
-                    Change Password
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      onClick={() => setShowPasswordModal(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-ethereal-surface-dim hover:bg-ethereal-outline/30 text-ethereal-tertiary font-medium transition-colors"
+                    >
+                      <Lock size={18} className="text-ethereal-tertiary/60" />
+                      Change Password
+                    </button>
+                    <button
+                      onClick={logout}
+                      className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-ethereal-error/10 hover:bg-ethereal-error/20 text-ethereal-error font-medium transition-colors"
+                    >
+                      <LogOut size={18} />
+                      Log out
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

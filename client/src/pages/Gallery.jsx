@@ -111,18 +111,23 @@ export default function Gallery() {
               <Sparkles size={16} />
               Save Memory
             </Link>
-            {/* Mobile FAB */}
-            <button
-              onClick={() => setShowUpload(true)}
-              className="w-14 h-14 bg-ethereal-primary text-white rounded-full flex items-center justify-center shadow-ambient sm:hidden active:scale-95 transition-transform z-50 fixed bottom-24 right-6"
-            >
-              <Plus size={24} />
-            </button>
           </motion.div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto pl-6 pr-6 sm:pl-12 sm:pr-12 md:pl-28 md:pr-16">
+        {/* Mobile Add Button */}
+        <div className="flex sm:hidden mb-6 gap-3">
+          <button onClick={() => setShowUpload(true)} className="btn-primary flex-1 py-3.5 flex items-center justify-center gap-2">
+            <Camera size={18} />
+            Upload Photo
+          </button>
+          <Link to="/memories/new" className="flex-1 py-3.5 flex items-center justify-center gap-2 rounded-full border border-ethereal-outline text-ethereal-tertiary font-semibold text-sm">
+            <Sparkles size={16} />
+            Save Memory
+          </Link>
+        </div>
+
         {status === 'pending' ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {[...Array(8)].map((_, i) => (

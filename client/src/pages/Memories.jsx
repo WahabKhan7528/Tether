@@ -186,14 +186,19 @@ export default function Memories() {
               <Sparkles size={18} className="relative z-10" />
               <span className="relative z-10 text-sm sm:text-base">Save memory</span>
             </Link>
-            <Link to="/memories/new" className="w-14 h-14 bg-ethereal-primary text-white rounded-full flex items-center justify-center shadow-ambient sm:hidden active:scale-95 transition-transform z-50 fixed bottom-24 right-6">
-              <Plus size={24} />
-            </Link>
           </motion.div>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto pl-6 pr-6 sm:pl-12 sm:pr-12 md:pl-28 md:pr-16">
+        {/* Mobile Add Button */}
+        <div className="flex sm:hidden mb-6">
+          <Link to="/memories/new" className="btn-primary w-full py-3.5 flex items-center justify-center gap-2">
+            <Sparkles size={18} />
+            Save Memory
+          </Link>
+        </div>
+
         {/* Categories (Framer Motion Pill Dock) */}
         <div className="flex flex-col mb-12">
           <motion.div 
@@ -274,7 +279,7 @@ export default function Memories() {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
                 transition={{ duration: 0.3 }}
-                className="w-full max-w-lg bg-ethereal-surface-dim rounded-[2rem] shadow-2xl p-8 sm:p-12 relative max-h-[90vh] overflow-y-auto border border-ethereal-outline/50"
+                className="w-full max-w-lg bg-ethereal-surface-dim rounded-[2rem] shadow-2xl p-5 sm:p-8 md:p-12 relative max-h-[90vh] overflow-y-auto border border-ethereal-outline/50"
               >
                 <button onClick={closeForm} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center text-ethereal-tertiary/40 hover:bg-ethereal-surface-dim hover:text-ethereal-tertiary rounded-full transition-all">
                   <X size={20} />
@@ -299,7 +304,7 @@ export default function Memories() {
 
                   <div>
                     <label className="block text-sm font-medium text-ethereal-tertiary/70 mb-4">Choose an Icon</label>
-                    <div className="grid grid-cols-5 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
                       {ICON_OPTIONS.map((iconKey) => {
                         const isSelected = form.icon === iconKey || (!ICON_MAP[form.icon] && iconKey === 'Folder');
                         return (

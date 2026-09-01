@@ -244,7 +244,7 @@ export default function EditMemory() {
               <label className="text-sm font-medium text-ethereal-tertiary/70 pl-1">Title</label>
               <input
                 type="text"
-                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-5 py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all font-heading text-2xl"
+                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all font-heading text-xl sm:text-2xl"
                 placeholder="Give this memory a title..."
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -256,7 +256,7 @@ export default function EditMemory() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-ethereal-tertiary/70 pl-1">Description</label>
               <textarea
-                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-5 py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all resize-none leading-relaxed"
+                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all resize-none leading-relaxed"
                 rows={4}
                 placeholder="Write something about this moment..."
                 value={form.description}
@@ -277,7 +277,7 @@ export default function EditMemory() {
                 <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center gap-2 pl-1"><MapPin size={14} /> Location</label>
                 <input
                   type="text"
-                  className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-5 py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all"
+                  className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all"
                   placeholder="Where were you?"
                   value={form.location}
                   onChange={(e) => setForm({ ...form, location: e.target.value })}

@@ -88,7 +88,7 @@ export default function NewReel() {
               <div className="relative">
                 <input
                   type="url"
-                  className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-5 py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all"
+                  className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all"
                   placeholder="https://www.instagram.com/reel/..."
                   value={form.url}
                   onChange={(e) => handleUrlChange(e.target.value)}
@@ -115,7 +115,7 @@ export default function NewReel() {
               <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center gap-2 pl-1"><PenLine size={14}/> Title</label>
               <input
                 type="text"
-                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-5 py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all font-heading text-xl"
+                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all font-heading text-lg sm:text-xl"
                 placeholder="What is this about?"
                 value={form.caption}
                 onChange={(e) => setForm({ ...form, caption: e.target.value })}
@@ -126,7 +126,7 @@ export default function NewReel() {
             <div className="space-y-2">
               <label className="text-sm font-medium text-ethereal-tertiary/70 flex items-center gap-2 pl-1"><MessageSquare size={14}/> Your Note</label>
               <textarea
-                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-5 py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all resize-none"
+                className="w-full bg-ethereal-surface border border-ethereal-outline rounded-2xl px-4 py-3 sm:px-5 sm:py-4 text-ethereal-tertiary placeholder:text-ethereal-tertiary/30 focus:outline-none focus:border-ethereal-primary focus:ring-1 focus:ring-ethereal-primary transition-all resize-none"
                 rows={3}
                 placeholder="This looks so fun, we should try it this weekend!"
                 value={form.note}
