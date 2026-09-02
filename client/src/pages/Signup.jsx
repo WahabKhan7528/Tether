@@ -71,6 +71,127 @@ export default function Signup() {
           
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/20 to-transparent"></div>
           
+          {/* SVG Decorations */}
+          {/* Top-Left */}
+          <div className="absolute top-0 left-0 -mt-6 -ml-6 text-ethereal-primary/20 pointer-events-none -rotate-90">
+            <motion.svg width="150" height="150" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <motion.path 
+                d="M20 80C20 40 50 20 80 20C70 50 50 70 20 80Z" 
+                stroke="currentColor" 
+                strokeWidth="1.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.2, ease: "easeInOut", delay: 0.1 }}
+              />
+              <motion.path 
+                d="M20 80C35 65 50 50 80 20" 
+                stroke="currentColor" 
+                strokeWidth="1"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.2, ease: "easeInOut", delay: 0.4 }}
+              />
+              <motion.path 
+                d="M40 70C50 60 60 40 70 30" 
+                stroke="currentColor" 
+                strokeWidth="0.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.6 }}
+                transition={{ duration: 2.2, ease: "easeInOut", delay: 0.6 }}
+              />
+            </motion.svg>
+          </div>
+
+          {/* Top-Right */}
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 text-ethereal-primary/20 pointer-events-none">
+            <motion.svg width="130" height="130" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <motion.path 
+                d="M20 80C20 40 50 20 80 20C70 50 50 70 20 80Z" 
+                stroke="currentColor" 
+                strokeWidth="1.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.4, ease: "easeInOut", delay: 0.2 }}
+              />
+              <motion.path 
+                d="M20 80C35 65 50 50 80 20" 
+                stroke="currentColor" 
+                strokeWidth="1"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.4, ease: "easeInOut", delay: 0.5 }}
+              />
+              <motion.path 
+                d="M40 70C50 60 60 40 70 30" 
+                stroke="currentColor" 
+                strokeWidth="0.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.6 }}
+                transition={{ duration: 2.4, ease: "easeInOut", delay: 0.7 }}
+              />
+            </motion.svg>
+          </div>
+          
+          {/* Bottom-Right */}
+          <div className="absolute bottom-0 right-0 -mb-8 -mr-8 text-ethereal-primary/20 pointer-events-none rotate-90">
+            <motion.svg width="180" height="180" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <motion.path 
+                d="M20 80C20 40 50 20 80 20C70 50 50 70 20 80Z" 
+                stroke="currentColor" 
+                strokeWidth="1.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.8, ease: "easeInOut", delay: 0.3 }}
+              />
+              <motion.path 
+                d="M20 80C35 65 50 50 80 20" 
+                stroke="currentColor" 
+                strokeWidth="1"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.8, ease: "easeInOut", delay: 0.6 }}
+              />
+              <motion.path 
+                d="M40 70C50 60 60 40 70 30" 
+                stroke="currentColor" 
+                strokeWidth="0.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.6 }}
+                transition={{ duration: 2.8, ease: "easeInOut", delay: 0.8 }}
+              />
+            </motion.svg>
+          </div>
+
+          {/* Bottom-Left */}
+          <div className="absolute bottom-0 left-0 -mb-6 -ml-6 text-ethereal-primary/20 pointer-events-none rotate-180">
+            <motion.svg width="160" height="160" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <motion.path 
+                d="M20 80C20 40 50 20 80 20C70 50 50 70 20 80Z" 
+                stroke="currentColor" 
+                strokeWidth="1.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.5, ease: "easeInOut", delay: 0.4 }}
+              />
+              <motion.path 
+                d="M20 80C35 65 50 50 80 20" 
+                stroke="currentColor" 
+                strokeWidth="1"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 1 }}
+                transition={{ duration: 2.5, ease: "easeInOut", delay: 0.7 }}
+              />
+              <motion.path 
+                d="M40 70C50 60 60 40 70 30" 
+                stroke="currentColor" 
+                strokeWidth="0.5"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={{ pathLength: 1, opacity: 0.6 }}
+                transition={{ duration: 2.5, ease: "easeInOut", delay: 0.9 }}
+              />
+            </motion.svg>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-8 relative z-10">
             <h1 className="text-3xl sm:text-4xl font-heading font-bold text-white tracking-tight mb-2">

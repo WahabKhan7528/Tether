@@ -13,6 +13,7 @@ import PageChangeLoader from './components/PageChangeLoader';
 
 
 // ─── Code-Split Pages ─────────────────────────────────────────────────────────
+const Landing = lazy(() => import('./pages/Landing'));
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
@@ -79,7 +80,7 @@ export default function App() {
               <Suspense fallback={<FullPageLoader />}>
                 <Routes>
                   {/* Root redirect */}
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                  <Route path="/" element={<Landing />} />
 
                   {/* Public auth pages */}
                   <Route path="/login" element={<Login />} />
