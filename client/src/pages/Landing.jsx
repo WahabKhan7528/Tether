@@ -50,7 +50,7 @@ export default function Landing() {
   const moonRotate = useTransform(scrollYProgress, [0, 1], [0, 25]);
 
   // Center tether line scale
-  const lineScaleY = useTransform(scrollYProgress, [0.1, 0.95], [0, 1]);
+  const lineScaleY = useTransform(scrollYProgress, [0, 0.95], [0, 1]);
   
   // Opacity for the hero text
   const heroOpacity = useTransform(scrollYProgress, [0, 0.15], [1, 0]);
@@ -130,7 +130,7 @@ export default function Landing() {
       <div className="relative z-10 w-full min-h-[450vh]">
         
         {/* The Ethereal Thread of Fate */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" style={{ height: '100%' }}>
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <svg viewBox="0 0 100 450" preserveAspectRatio="none" className="w-full h-full">
             {/* Deep Wide Glow */}
             <motion.path 
@@ -214,8 +214,8 @@ export default function Landing() {
               </div>
             </Link>
 
-            {/* Secondary Minimal Button */}
-            <Link to="/login" className="text-white/50 hover:text-white uppercase tracking-widest text-sm font-light transition-colors duration-300">
+            {/* Secondary Ghost Button */}
+            <Link to="/login" className="px-8 py-3.5 rounded-full border border-white/10 hover:border-ethereal-primary/50 bg-white/5 hover:bg-ethereal-primary/10 text-white/70 hover:text-white font-medium text-lg tracking-wide transition-all duration-300 hover:shadow-[0_0_20px_rgba(var(--color-primary),0.2)]">
               Sign In
             </Link>
           </motion.div>
