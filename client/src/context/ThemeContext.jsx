@@ -18,8 +18,8 @@ export function ThemeProvider({ children }) {
   const location = useLocation();
 
   useEffect(() => {
-    const isAuthPage = ['/login', '/signup', '/onboarding'].includes(location.pathname);
-    const activeTheme = isAuthPage ? 'dark' : theme;
+    const isFixedDarkPage = ['/', '/login', '/signup', '/onboarding'].includes(location.pathname);
+    const activeTheme = isFixedDarkPage ? 'dark' : theme;
     
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');

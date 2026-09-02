@@ -23,19 +23,19 @@ export default function BackgroundTheme() {
   const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
   const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const isAuthPage = ['/login', '/signup', '/onboarding'].includes(location.pathname);
+  const isFixedThemePage = ['/', '/login', '/signup', '/onboarding'].includes(location.pathname);
 
   // We default to 'sad' for the traditional bronze aesthetic unless explicitly 'happy'
-  // On auth pages, we always force 'sad' mood
-  const mood = isAuthPage ? 'sad' : (user?.currentStatus === 'happy' ? 'happy' : 'sad');
+  // On fixed theme pages (like landing/auth), we always force 'sad' mood
+  const mood = isFixedThemePage ? 'sad' : (user?.currentStatus === 'happy' ? 'happy' : 'sad');
 
   // Apply the mood to the root element for CSS variables
   useEffect(() => {
     document.documentElement.setAttribute('data-mood', mood);
   }, [mood]);
 
-  // On auth pages, we always force dark theme
-  const isDark = isAuthPage ? true : theme === 'dark';
+  // On fixed theme pages, we always force dark theme
+  const isDark = isFixedThemePage ? true : theme === 'dark';
   const isHappy = mood === 'happy';
 
   // Determine tree image, translation classes, and opacity
