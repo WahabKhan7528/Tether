@@ -33,12 +33,7 @@ function Lantern({ className, rotateConfig, duration, glowId, delay = 0 }) {
 
 export default function Landing() {
   const { user, loading } = useAuth();
-  const containerRef = useRef(null);
-  
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"]
-  });
+  const { scrollYProgress } = useScroll();
 
   // Parallax transforms for the SVGs based on scroll
   const mountainY1 = useTransform(scrollYProgress, [0, 1], ['0%', '15%']);
@@ -60,7 +55,7 @@ export default function Landing() {
   if (loading) return null;
 
   return (
-    <div ref={containerRef} className="relative text-white min-h-[400vh] bg-ethereal-bg overflow-hidden">
+    <div className="relative text-white min-h-[400vh] bg-ethereal-bg overflow-hidden">
       
       {/* Background container for the drawing animations */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-end justify-center">
@@ -130,42 +125,24 @@ export default function Landing() {
       <div className="relative z-10 w-full min-h-[450vh]">
         
         {/* The Ethereal Thread of Fate */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <svg viewBox="0 0 100 450" preserveAspectRatio="none" className="w-full h-full">
-            {/* Deep Wide Glow */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <svg viewBox="0 0 100 450" preserveAspectRatio="none" className="w-full h-full overflow-visible">
+            {/* Outer Deep Glow */}
             <motion.path 
               d="M 50 0 C 50 80, 15 80, 15 135 C 15 170, 85 170, 85 205 C 85 240, 15 240, 15 275 C 15 310, 85 310, 85 345 C 85 380, 15 380, 15 415 C 15 435, 50 435, 50 450"
               fill="none"
               stroke="#3E3024"
-              strokeWidth="6"
-              className="opacity-40 blur-[10px]"
+              strokeWidth="5"
+              className="opacity-50 blur-[8px]"
               style={{ pathLength: lineScaleY }}
             />
-            {/* Mid Glow */}
+            {/* Bright Inner Core */}
             <motion.path 
               d="M 50 0 C 50 80, 15 80, 15 135 C 15 170, 85 170, 85 205 C 85 240, 15 240, 15 275 C 15 310, 85 310, 85 345 C 85 380, 15 380, 15 415 C 15 435, 50 435, 50 450"
               fill="none"
-              stroke="#3E3024"
-              strokeWidth="3"
-              className="opacity-70 blur-[4px]"
-              style={{ pathLength: lineScaleY }}
-            />
-            {/* Bright Inner Glow */}
-            <motion.path 
-              d="M 50 0 C 50 80, 15 80, 15 135 C 15 170, 85 170, 85 205 C 85 240, 15 240, 15 275 C 15 310, 85 310, 85 345 C 85 380, 15 380, 15 415 C 15 435, 50 435, 50 450"
-              fill="none"
-              stroke="#5A4737" /* Slightly lighter brown for inner heat */
+              stroke="#5A4737"
               strokeWidth="1.5"
-              className="opacity-90 blur-[1px]"
-              style={{ pathLength: lineScaleY }}
-            />
-            {/* Core Solid Thread */}
-            <motion.path 
-              d="M 50 0 C 50 80, 15 80, 15 135 C 15 170, 85 170, 85 205 C 85 240, 15 240, 15 275 C 15 310, 85 310, 85 345 C 85 380, 15 380, 15 415 C 15 435, 50 435, 50 450"
-              fill="none"
-              stroke="#3E3024"
-              strokeWidth="0.8"
-              className="drop-shadow-[0_0_15px_#3E3024]"
+              className="opacity-100 drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
               style={{ pathLength: lineScaleY }}
             />
           </svg>
