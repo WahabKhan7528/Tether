@@ -2,25 +2,17 @@
 
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 const User = require('../models/User');
 const Couple = require('../models/Couple');
 const generateInviteCode = require('../utils/generateInviteCode');
 const { setAuthCookies, clearAuthCookies } = require('../utils/tokens');
 const { createError } = require('../middleware/errorHandler');
-const imagekitService = require('../services/imagekit');
 const { createAvatarUpload } = require('../config/multer');
 
-// ─── Multer for avatar uploads (memory storage → ImageKit) ───────────────────────
 const avatarUpload = createAvatarUpload();
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Safe public user representation.
- * Never returns passwordHash, avatarFileId, or other internal fields.
- */
 function formatUser(user, couple) {
   return {
     id: user._id,
@@ -50,7 +42,6 @@ function formatUser(user, couple) {
           milestones:         couple.milestones || [],
           bucketList:         couple.bucketList || [],
           interactions:       couple.interactions || { hugCount: 0, kissCount: 0 },
-          themeSong:          couple.themeSong || null,
           memberCount:        couple.members.length,
         }
       : null,
@@ -70,21 +61,12 @@ async function generateUniqueInviteCode(session) {
   return inviteCode;
 }
 
-// ─── Signup ───────────────────────────────────────────────────────────────────
-/**
- * Creates user and assigns to a couple.
- *
- * Body:
- *   name, email, password
- *   inviteCode? (optional, to join an existing couple)
- */
 async function signup(req, res, next) {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { name, email, password, inviteCode } = req.body;
 
-    // ── Duplicate email checks ────────────────────────────────────────────────
     const existingUser = await User.findOne({ email: email.toLowerCase().trim() }).session(session);
 
     if (existingUser) {
@@ -92,16 +74,15 @@ async function signup(req, res, next) {
       return next(createError('An account with this email already exists.', 409, 'EMAIL_ALREADY_EXISTS'));
     }
 
-    // ── Hash password ───────────────────────────────────────────────────
     const passwordHash = await bcrypt.hash(password, 12);
 
     let couple;
     let role;
 
     if (inviteCode) {
-      // Joining an existing couple
+
       couple = await Couple.findOne({ inviteCode: inviteCode.toUpperCase().trim() }).session(session);
-      
+
       if (!couple) {
         await session.abortTransaction();
         return next(createError('Invalid invite code. Please check and try again.', 404, 'INVALID_INVITE_CODE'));
@@ -112,14 +93,13 @@ async function signup(req, res, next) {
       }
       role = 'partner';
     } else {
-      // Creating a new couple
+
       const newInviteCode = await generateUniqueInviteCode(session);
       couple = new Couple({ members: [], inviteCode: newInviteCode });
       await couple.save({ session });
       role = 'admin';
     }
 
-    // ── Create user ─────────────────────────────────────────────────────
     const user = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -129,13 +109,11 @@ async function signup(req, res, next) {
     });
     await user.save({ session });
 
-    // ── Link user to couple ───────────────────────────────────────────────────
     couple.members.push(user._id);
     await couple.save({ session });
 
     await session.commitTransaction();
 
-    // ── Issue cookie-based session ────────────────────────────
     setAuthCookies(res, user._id);
 
     return res.status(201).json({
@@ -150,7 +128,6 @@ async function signup(req, res, next) {
   }
 }
 
-// ─── Login ────────────────────────────────────────────────────────────────────
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -179,15 +156,9 @@ async function login(req, res, next) {
   }
 }
 
-// ─── Refresh ──────────────────────────────────────────────────────────────────
-/**
- * Explicit refresh endpoint (called when silent rotation in middleware fails).
- * Reads the refreshToken cookie and rotates both cookies.
- */
 async function refresh(req, res, next) {
   try {
-    // Note: authenticate middleware handles silent rotation automatically.
-    // This endpoint is kept for cases where the client explicitly needs to refresh.
+
     const { verifyRefreshToken } = require('../utils/tokens');
     const token = req.cookies?.refreshToken;
     if (!token) return next(createError('No refresh token', 401, 'UNAUTHORIZED'));
@@ -204,13 +175,36 @@ async function refresh(req, res, next) {
   }
 }
 
-// ─── Logout ───────────────────────────────────────────────────────────────────
 function logout(req, res) {
+  try {
+    const token = req.cookies?.accessToken || req.cookies?.refreshToken;
+    if (token) {
+      let decoded;
+      try {
+        const { verifyAccessToken } = require('../utils/tokens');
+        decoded = verifyAccessToken(token);
+      } catch (verifyErr) {
+
+      }
+      if (decoded && decoded.userId) {
+        const { getIo } = require('../config/socket');
+        const io = getIo();
+        for (const [id, socket] of io.sockets.sockets) {
+          if (socket.user && socket.user._id.toString() === decoded.userId) {
+            socket.disconnect(true);
+            console.log(`[Socket] Disconnected socket for logged out user: ${decoded.userId}`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[Logout Socket Error]:', err.message);
+  }
+
   clearAuthCookies(res);
   return res.json({ success: true, data: { message: 'Logged out successfully.' } });
 }
 
-// ─── Me ───────────────────────────────────────────────────────────────────────
 async function me(req, res, next) {
   try {
     const user = await User.findById(req.user._id).populate('coupleId');
@@ -225,7 +219,6 @@ async function me(req, res, next) {
   }
 }
 
-// ─── Update Me ────────────────────────────────────────────────────────────────
 async function updateMe(req, res, next) {
   try {
     const allowed = ['name', 'nickname', 'gender', 'dateOfBirth', 'bio', 'favouriteColour', 'partnerKnowledge', 'currentStatus', 'hugsSent'];
@@ -251,7 +244,6 @@ async function updateMe(req, res, next) {
   }
 }
 
-// ─── Update Partner ───────────────────────────────────────────────────────────
 async function updatePartner(req, res, next) {
   try {
     if (req.user.role !== 'admin') {
@@ -270,7 +262,6 @@ async function updatePartner(req, res, next) {
       { new: true, runValidators: true }
     );
 
-    // Return the current user so UI can update the whole state which populates partner inside Couple
     const user = await User.findById(req.user._id).populate({
       path: 'coupleId',
       populate: { path: 'members' }
@@ -282,7 +273,6 @@ async function updatePartner(req, res, next) {
   }
 }
 
-// ─── Change Password ──────────────────────────────────────────────────────────
 async function changePassword(req, res, next) {
   try {
     const { currentPassword, newPassword } = req.body;
@@ -300,7 +290,6 @@ async function changePassword(req, res, next) {
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     await user.save();
 
-    // Rotate session cookies so any leaked old tokens are invalidated
     setAuthCookies(res, user._id);
 
     return res.json({ success: true, data: { message: 'Password updated successfully.' } });
@@ -309,7 +298,6 @@ async function changePassword(req, res, next) {
   }
 }
 
-// ─── Complete Onboarding ──────────────────────────────────────────────────────
 async function completeOnboarding(req, res, next) {
   try {
     const { nickname, gender, dateOfBirth, bio, favouriteColour } = req.body;
@@ -333,37 +321,39 @@ async function completeOnboarding(req, res, next) {
   }
 }
 
-// ─── Upload Avatar ────────────────────────────────────────────────────────────
 async function uploadAvatar(req, res, next) {
   try {
     if (!req.file) return next(createError('No image provided.', 400, 'NO_FILE'));
 
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
-    const folder = `tether/${coupleId}/avatars`;
-    const ext = path.extname(req.file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.jpg';
-    const fileName = `${uuidv4()}${ext}`;
+    const dynamicId = req.user.coupleId?._id || req.user.coupleId || req.user._id;
+    const key = `avatars/${dynamicId}/${req.file.filename}`;
+    const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
+    const url = `${serverUrl}/uploads/${key}`;
 
-    const { url, fileId } = await imagekitService.uploadFile({
-      buffer: req.file.buffer,
-      fileName,
-      folder,
-      tags: ['avatar', String(req.user._id)],
-    });
-
-    // Delete old avatar from ImageKit if it exists
     const existing = await User.findById(req.user._id).select('+avatarFileId');
     if (existing?.avatarFileId) {
-      await imagekitService.deleteFile(existing.avatarFileId);
+      try {
+        const oldPath = path.join(__dirname, '..', '..', 'uploads', existing.avatarFileId);
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      } catch (err) {
+        console.error('[Avatar] Failed to delete old avatar:', err.message);
+      }
     }
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { avatarUrl: url, avatarFileId: fileId },
+      { avatarUrl: url, avatarFileId: key },
       { new: true }
     ).populate('coupleId');
 
     return res.json({ success: true, data: { user: formatUser(user, user.coupleId) } });
   } catch (err) {
+
+    if (req.file?.path) {
+      try {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      } catch (_) {}
+    }
     next(err);
   }
 }

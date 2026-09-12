@@ -65,8 +65,22 @@ const AVATAR_ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
 const AVATAR_MAX_SIZE     = 5 * 1024 * 1024; // 5 MB
 
 function createAvatarUpload() {
+  const storage = multer.diskStorage({
+    destination(req, _file, cb) {
+      // Use coupleId if available, otherwise fallback to userId
+      const dynamicId = req.user.coupleId?._id || req.user.coupleId || req.user._id;
+      const dir = path.join(UPLOADS_DIR, 'avatars', String(dynamicId));
+      fs.mkdirSync(dir, { recursive: true });
+      cb(null, dir);
+    },
+    filename(_req, file, cb) {
+      const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.jpg';
+      cb(null, `${uuidv4()}${ext}`);
+    },
+  });
+
   return multer({
-    storage:    multer.memoryStorage(),
+    storage,
     limits:     { fileSize: AVATAR_MAX_SIZE },
     fileFilter: avatarFileFilter,
   });

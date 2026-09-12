@@ -40,7 +40,8 @@ async function getMemories(req, res, next) {
         .populate('createdBy', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       Memory.countDocuments(filter),
     ]);
 
@@ -63,7 +64,8 @@ async function getMemory(req, res, next) {
       coupleId: req.user.coupleId,
     })
       .populate('categoryId', 'name icon')
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name')
+      .lean();
 
     if (!memory) return next(createError('Memory not found', 404, 'NOT_FOUND'));
     return res.json({ success: true, data: memory });

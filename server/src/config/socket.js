@@ -22,7 +22,7 @@ function initSocket(server) {
         return next(new Error('Authentication error'));
       }
       
-      const cookies = cookie.parseCookie(cookieHeader);
+      const cookies = cookie.parse(cookieHeader);
       const token = cookies.accessToken;
       
       if (!token) {
@@ -32,8 +32,8 @@ function initSocket(server) {
       const decoded = verifyAccessToken(token);
       const user = await User.findById(decoded.userId).lean();
       
-      if (!user || !user.coupleId) {
-        return next(new Error('Authentication error or not paired'));
+      if (!user) {
+        return next(new Error('Authentication error'));
       }
       
       socket.user = user;
@@ -47,10 +47,18 @@ function initSocket(server) {
   io.on('connection', (socket) => {
     console.log(`[Socket] User connected: ${socket.user._id}`);
     
-    // Join a room specifically for this couple
-    const room = `couple_${socket.user.coupleId.toString()}`;
-    socket.join(room);
-    console.log(`[Socket] User joined room: ${room}`);
+    // If paired, join the couple room. If not, join a personal room.
+    if (socket.user.coupleId) {
+      const room = `couple_${socket.user.coupleId.toString()}`;
+      socket.join(room);
+      console.log(`[Socket] User joined room: ${room}`);
+    } else {
+      const room = `user_${socket.user._id.toString()}`;
+      socket.join(room);
+      console.log(`[Socket] User joined room: ${room}`);
+    }
+    
+    const room = socket.user.coupleId ? `couple_${socket.user.coupleId.toString()}` : `user_${socket.user._id.toString()}`;
 
     // Listen for mood changes and broadcast to partner
     socket.on('status_update', (data) => {

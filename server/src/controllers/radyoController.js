@@ -9,7 +9,6 @@ const { UPLOADS_DIR } = require('../config/multer');
 const gzip = util.promisify(zlib.gzip);
 const gunzip = util.promisify(zlib.gunzip);
 
-const { audioStorage } = require('../services/storage');
 
 /**
  * Upload a new track for the couple

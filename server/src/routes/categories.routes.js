@@ -1,7 +1,7 @@
 'use strict';
 
 const express = require('express');
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
 const router = express.Router();
 const { getCategories, createCategory, updateCategory, deleteCategory } = require('../controllers/categoriesController');
 const { authenticate, requirePaired } = require('../middleware/auth');

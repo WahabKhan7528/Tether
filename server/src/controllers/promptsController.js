@@ -13,7 +13,7 @@ async function getTodayPrompt(req, res, next) {
 
     const coupleId = req.user.coupleId?._id || req.user.coupleId;
 
-    let promptRecord = await PromptAnswer.findOne({ coupleId, dateString });
+    let promptRecord = await PromptAnswer.findOne({ coupleId, dateString }).lean();
 
     let answers = [];
     if (promptRecord) {

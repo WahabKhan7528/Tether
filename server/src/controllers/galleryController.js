@@ -21,72 +21,54 @@ async function getGallery(req, res, next) {
     const limit    = Math.min(100, Math.max(1, parseInt(req.query.limit) || 30));
     const skip     = (page - 1) * limit;
 
-    // ── Fetch both sources in parallel, sorted at DB level ───────────────────
-    // We over-fetch slightly to interleave correctly; a proper cursor-based
-    // approach would require a unified collection. For the current scale (couples
-    // with <500 photos each) this is fast and correct.
-    const [memories, galleryPhotos, totalMemoryDocs, totalGallery] = await Promise.all([
-      Memory.find({ coupleId, 'images.0': { $exists: true } })
-        .select('title dateTaken location images createdAt')
-        .sort({ createdAt: -1 })
-        .lean(),
+    const pipeline = [
+      // 1. Start with GalleryPhoto
+      { $match: { coupleId: coupleId } },
+      { $project: {
+          url: 1, key: 1, title: 1, caption: 1, dateTaken: 1,
+          location: 1, coordinates: 1, uploadedBy: 1, createdAt: 1,
+          source: { $literal: 'gallery' }, memoryId: { $literal: null }
+        }
+      },
+      // 2. Union with Memories that have images
+      { $unionWith: {
+          coll: 'memories',
+          pipeline: [
+            { $match: { coupleId: coupleId, 'images.0': { $exists: true } } },
+            // Unwind images to get one document per image
+            { $unwind: '$images' },
+            { $project: {
+                _id: '$images._id', url: '$images.url', key: '$images.key',
+                order: '$images.order', source: { $literal: 'memory' },
+                memoryId: '$_id', title: 1, caption: { $literal: '' },
+                dateTaken: 1, location: 1, coordinates: 1, createdAt: 1
+              }
+            }
+          ]
+        }
+      },
+      // 3. Facet for paginated data and total count
+      { $facet: {
+          data: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit }
+          ],
+          totalCount: [
+            { $count: 'count' }
+          ]
+        }
+      }
+    ];
 
-      GalleryPhoto.find({ coupleId })
-        .populate('uploadedBy', 'name')
-        .sort({ createdAt: -1 })
-        .lean(),
-
-      Memory.countDocuments({ coupleId, 'images.0': { $exists: true } }),
-      GalleryPhoto.countDocuments({ coupleId }),
-    ]);
-
-    // ── Flatten memory images ─────────────────────────────────────────────────
-    const memoryImages = [];
-    memories.forEach((memory) => {
-      memory.images.forEach((image) => {
-        memoryImages.push({
-          _id:       image._id,
-          url:       image.url,
-          key:       image.key,
-          order:     image.order,
-          source:    'memory',
-          memoryId:  memory._id,
-          title:     memory.title,
-          caption:   '',
-          dateTaken: memory.dateTaken,
-          location:  memory.location,
-          coordinates: memory.coordinates,
-          createdAt: memory.createdAt,
-        });
-      });
-    });
-
-    const galleryItems = galleryPhotos.map((photo) => ({
-      _id:        photo._id,
-      url:        photo.url,
-      key:        photo.key,
-      source:     'gallery',
-      memoryId:   null,
-      title:      photo.title,
-      caption:    photo.caption,
-      dateTaken:  photo.dateTaken,
-      location:   photo.location,
-      coordinates: photo.coordinates,
-      uploadedBy: photo.uploadedBy,
-      createdAt:  photo.createdAt,
-    }));
-
-    // ── Merge, sort, paginate ─────────────────────────────────────────────────
-    const allImages = [...memoryImages, ...galleryItems]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-    const total      = allImages.length;
-    const paginated  = allImages.slice(skip, skip + limit);
+    const result = await GalleryPhoto.aggregate(pipeline);
+    const paginated = result[0].data;
+    const total = result[0].totalCount.length > 0 ? result[0].totalCount[0].count : 0;
     const totalPages = Math.ceil(total / limit);
 
     return res.json({
       success: true,
-      data:    paginated,
+      data: paginated,
       pagination: { page, limit, total, totalPages },
     });
   } catch (err) {

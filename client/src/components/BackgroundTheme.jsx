@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import FallingLeaves from './FallingLeaves';
@@ -18,24 +17,25 @@ import radyoSadDark from '../assets/radyo_bg_sad_dark.jpg';
 export default function BackgroundTheme() {
   const { user } = useAuth();
   const { theme } = useTheme();
-  const location = useLocation();
 
-  const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches;
-  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  const isFixedThemePage = ['/', '/login', '/signup', '/onboarding'].includes(location.pathname);
+  const isMobile = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
+    []
+  );
+  const prefersReducedMotion = useMemo(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+    []
+  );
 
   // We default to 'sad' for the traditional bronze aesthetic unless explicitly 'happy'
-  // On fixed theme pages (like landing/auth), we always force 'sad' mood
-  const mood = isFixedThemePage ? 'sad' : (user?.currentStatus === 'happy' ? 'happy' : 'sad');
+  const mood = user?.currentStatus === 'happy' ? 'happy' : 'sad';
 
   // Apply the mood to the root element for CSS variables
   useEffect(() => {
     document.documentElement.setAttribute('data-mood', mood);
   }, [mood]);
 
-  // On fixed theme pages, we always force dark theme
-  const isDark = isFixedThemePage ? true : theme === 'dark';
+  const isDark = theme === 'dark';
   const isHappy = mood === 'happy';
 
   // Determine tree image, translation classes, and opacity
@@ -44,7 +44,7 @@ export default function BackgroundTheme() {
   let translateYClass = '';
   let opacityClass = '';
   let heightClass = 'h-[100vh] sm:h-[120vh] md:h-[135vh]';
-  
+
   if (isHappy) {
     if (isDark) {
       treeSrc = treeLavender;
@@ -75,7 +75,7 @@ export default function BackgroundTheme() {
   // Determine falling leaves type and color styling
   let leavesType = 'leaf';
   let leavesColorClass = '';
-  
+
   if (isHappy) {
     if (isDark) {
       // Lavender
@@ -93,11 +93,11 @@ export default function BackgroundTheme() {
       leavesColorClass = 'text-ethereal-primary/60';
     } else {
       // Muted greyish-brown to match the v2 tree's desaturated leaves
-      leavesColorClass = 'text-[#9e958d]/50'; 
+      leavesColorClass = 'text-[#9e958d]/50';
     }
   }
 
-  const isRadyoPage = location.pathname === '/radyo';
+  const isRadyoPage = window.location.pathname === '/radyo';
   const shouldRenderDecorations = !isMobile && !prefersReducedMotion;
 
   if (isRadyoPage) {

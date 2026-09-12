@@ -11,7 +11,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 30 * 60 * 1000, // 30 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes (was cacheTime in v4, renamed to gcTime in v5)
       refetchOnWindowFocus: false, // Prevents excessive refetching when switching tabs
       retry: 1, // Only retry once on failure
     },

@@ -29,7 +29,8 @@ async function getLetters(req, res, next) {
   try {
     const letters = await LetterPage.find({ coupleId: req.user.coupleId })
       .populate('createdBy', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     return res.json({ success: true, data: letters });
   } catch (err) {
@@ -44,7 +45,7 @@ async function getLetter(req, res, next) {
     const letter = await LetterPage.findOne({
       _id: req.params.id,
       coupleId: req.user.coupleId,
-    }).populate('createdBy', 'name');
+    }).populate('createdBy', 'name').lean();
 
     if (!letter) return next(createError('Letter not found', 404, 'NOT_FOUND'));
     return res.json({ success: true, data: letter });
@@ -62,7 +63,7 @@ async function getLetterBySlug(req, res, next) {
     const letter = await LetterPage.findOne({
       slug:     req.params.slug,
       coupleId: req.user.coupleId,
-    }).populate('createdBy', 'name');
+    }).populate('createdBy', 'name').lean();
 
     if (!letter) return next(createError('Letter not found', 404, 'NOT_FOUND'));
     return res.json({ success: true, data: letter });

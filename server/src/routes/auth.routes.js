@@ -45,8 +45,8 @@ const updateMeValidators = [
   body('partnerKnowledge').optional().isArray().withMessage('Must be an array'),
   body('currentStatus')
     .optional()
-    .isIn(['happy', 'sad', 'busy', 'sleeping'])
-    .withMessage('currentStatus must be one of: happy, sad, busy, sleeping'),
+    .isIn(['happy', 'sad', 'busy', 'sleeping', 'stressed', 'tired', 'sick', 'energetic', 'romantic', 'angry', 'relaxed'])
+    .withMessage('Invalid status value'),
 ];
 
 const updatePartnerValidators = [

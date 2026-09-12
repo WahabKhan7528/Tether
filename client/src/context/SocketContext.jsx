@@ -16,8 +16,8 @@ export const SocketProvider = ({ children }) => {
   const coupleIdStr = typeof user?.coupleId === 'object' ? user.coupleId._id : user?.coupleId;
 
   useEffect(() => {
-    // Only connect if user is paired
-    if (!coupleIdStr) {
+
+    if (!user) {
       if (socket) {
         socket.disconnect();
         setSocket(null);
@@ -28,14 +28,6 @@ export const SocketProvider = ({ children }) => {
     const socketInstance = io(import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:5000', {
       withCredentials: true,
       transports: ['websocket', 'polling']
-    });
-
-    socketInstance.on('connect', () => {
-      console.log('Socket connected:', socketInstance.id);
-    });
-
-    socketInstance.on('disconnect', () => {
-      console.log('Socket disconnected');
     });
 
     socketInstance.on('receive_hug', (data) => {
@@ -49,12 +41,17 @@ export const SocketProvider = ({ children }) => {
           }
         });
       }
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['couple'] });
       if (refreshUser) refreshUser();
     });
 
     socketInstance.on('content_updated', () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['memories'] });
+      queryClient.invalidateQueries({ queryKey: ['gallery'] });
+      if (refreshUser) refreshUser();
+    });
+
+    socketInstance.on('partner_joined', () => {
       if (refreshUser) refreshUser();
     });
 
@@ -63,7 +60,7 @@ export const SocketProvider = ({ children }) => {
     return () => {
       socketInstance.disconnect();
     };
-  }, [coupleIdStr, queryClient, refreshUser]);
+  }, [user?._id, queryClient, refreshUser, coupleIdStr]);
 
   return (
     <SocketContext.Provider value={socket}>

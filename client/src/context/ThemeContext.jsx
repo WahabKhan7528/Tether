@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 const ThemeContext = createContext();
 
@@ -15,17 +14,12 @@ export function ThemeProvider({ children }) {
     return 'light';
   });
 
-  const location = useLocation();
-
   useEffect(() => {
-    const isFixedDarkPage = ['/', '/login', '/signup', '/onboarding'].includes(location.pathname);
-    const activeTheme = isFixedDarkPage ? 'dark' : theme;
-    
     const root = window.document.documentElement;
     root.classList.remove('light', 'dark');
-    root.classList.add(activeTheme);
+    root.classList.add(theme);
     localStorage.setItem('theme', theme);
-  }, [theme, location.pathname]);
+  }, [theme]);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');

@@ -5,11 +5,6 @@ const Couple = require('../models/Couple');
 const User   = require('../models/User');
 const { createError } = require('../middleware/errorHandler');
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/**
- * Build a safe partner object (excludes internal fields like passwordHash).
- */
 function formatPartner(member, currentUserId) {
   if (!member || member._id.toString() === currentUserId.toString()) return null;
   return {
@@ -28,9 +23,6 @@ function formatPartner(member, currentUserId) {
   };
 }
 
-/**
- * Build the shared couple payload used by multiple handlers.
- */
 function formatCouple(couple, currentUserId) {
   const partner = couple.members.find((m) => m._id.toString() !== currentUserId.toString());
   return {
@@ -51,7 +43,6 @@ function formatCouple(couple, currentUserId) {
 
 const POPULATE_MEMBERS = 'name email nickname gender bio favouriteColour avatarUrl currentStatus hugsSent role onboardingComplete';
 
-// ─── Get My Couple ─────────────────────────────────────────────────────────────
 async function getMyCouple(req, res, next) {
   try {
     if (!req.user.coupleId) {
@@ -59,7 +50,7 @@ async function getMyCouple(req, res, next) {
     }
 
     const coupleId = req.user.coupleId?._id || req.user.coupleId;
-    const couple = await Couple.findById(coupleId).populate('members', POPULATE_MEMBERS);
+    const couple = await Couple.findById(coupleId).populate('members', POPULATE_MEMBERS).lean();
     if (!couple) return next(createError('Couple not found', 404, 'NOT_FOUND'));
 
     return res.json({
@@ -74,21 +65,12 @@ async function getMyCouple(req, res, next) {
   }
 }
 
-// ─── Join Couple (via invite code) ────────────────────────────────────────────
-/**
- * Allows an authenticated user who has no coupleId to join an existing couple
- * by supplying the couple's inviteCode. The couple must have exactly 1 member.
- *
- * This is how the second user logs into the shared space for the first time
- * if an alternative signup flow (e.g. invite link) is used.
- */
 async function joinCouple(req, res, next) {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const { inviteCode } = req.body;
 
-    // User must not already belong to a couple
     if (req.user.coupleId) {
       await session.abortTransaction();
       return next(createError('You are already paired with a partner.', 409, 'ALREADY_PAIRED'));
@@ -108,17 +90,14 @@ async function joinCouple(req, res, next) {
       return next(createError('This couple is already full. Each couple can have at most 2 members.', 409, 'COUPLE_FULL'));
     }
 
-    // Check the requesting user is not the same as the existing member
     if (couple.members.some((m) => m._id.toString() === req.user._id.toString())) {
       await session.abortTransaction();
       return next(createError('You are already a member of this couple.', 409, 'ALREADY_PAIRED'));
     }
 
-    // Add user to couple
     couple.members.push(req.user._id);
     await couple.save({ session });
 
-    // Link couple to user
     await User.findByIdAndUpdate(
       req.user._id,
       { coupleId: couple._id },
@@ -127,8 +106,17 @@ async function joinCouple(req, res, next) {
 
     await session.commitTransaction();
 
-    // Re-fetch with full populate for consistent response shape
     const updatedCouple = await Couple.findById(couple._id).populate('members', POPULATE_MEMBERS);
+
+    const partnerId = updatedCouple.members.find(m => m._id.toString() !== req.user._id.toString())?._id;
+    if (partnerId) {
+      try {
+        const { getIo } = require('../config/socket');
+        getIo().to(`user_${partnerId.toString()}`).emit('partner_joined');
+      } catch (notifyErr) {
+        console.error('[Socket Error] Failed to notify partner:', notifyErr.message);
+      }
+    }
 
     return res.json({
       success: true,
@@ -145,21 +133,17 @@ async function joinCouple(req, res, next) {
   }
 }
 
-// ─── Update Couple ─────────────────────────────────────────────────────────────
 async function updateCouple(req, res, next) {
   try {
     if (!req.user.coupleId) {
       return next(createError('You are not in a couple.', 403, 'NOT_PAIRED'));
     }
 
-    // Only safe scalar fields and full array replacements
     const allowed = ['coupleNickname', 'anniversaryDate', 'relationshipStatus', 'coupleBio', 'milestones', 'bucketList', 'dateIdeas'];
     const updates = {};
-    console.log('Update couple called with req.body:', req.body);
     allowed.forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
-    console.log('Updates to apply:', updates);
 
     const coupleId = req.user.coupleId?._id || req.user.coupleId;
     const couple = await Couple.findByIdAndUpdate(
@@ -178,8 +162,6 @@ async function updateCouple(req, res, next) {
     next(err);
   }
 }
-
-// ─── Milestones ───────────────────────────────────────────────────────────────
 
 async function addMilestone(req, res, next) {
   try {
@@ -231,8 +213,6 @@ async function deleteMilestone(req, res, next) {
   }
 }
 
-// ─── Bucket List ──────────────────────────────────────────────────────────────
-
 async function addBucketListItem(req, res, next) {
   try {
     const { title } = req.body;
@@ -265,7 +245,7 @@ async function addBucketListItem(req, res, next) {
 
 async function toggleBucketListItem(req, res, next) {
   try {
-    // First, find current state to toggle it
+
     const current = await Couple.findOne(
       { _id: req.user.coupleId, 'bucketList._id': req.params.itemId },
       { 'bucketList.$': 1 }
@@ -295,7 +275,6 @@ async function toggleBucketListItem(req, res, next) {
   }
 }
 
-// ─── Delete Bucket List Item ──────────────────────────────────────────────────
 async function deleteBucketListItem(req, res, next) {
   try {
     const coupleId = req.user.coupleId?._id || req.user.coupleId;
@@ -311,8 +290,6 @@ async function deleteBucketListItem(req, res, next) {
     next(err);
   }
 }
-
-// ─── Date Ideas (Ideas Jar) ───────────────────────────────────────────────────
 
 async function addDateIdea(req, res, next) {
   try {

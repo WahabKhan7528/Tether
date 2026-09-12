@@ -106,11 +106,6 @@ export function RadioProvider({ children }) {
     }
   }, [volume]);
 
-  // No need to cleanup object URL since we are using backend URLs now
-  useEffect(() => {
-    return () => {};
-  }, [audioSrc]);
-
   // Socket sync logic
   useEffect(() => {
     if (!socket) return;

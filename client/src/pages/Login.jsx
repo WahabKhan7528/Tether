@@ -49,17 +49,17 @@ export default function Login() {
           {/* Top-Right */}
           <div className="absolute top-0 right-0 -mt-4 -mr-4 text-ethereal-primary/20 pointer-events-none">
             <motion.svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <motion.path 
-                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{ duration: 2, ease: "easeInOut", delay: 0.2 }}
               />
-              <motion.path 
-                d="M10 90L90 10" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90L90 10"
+                stroke="currentColor"
                 strokeWidth="1"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
@@ -67,21 +67,21 @@ export default function Login() {
               />
             </motion.svg>
           </div>
-          
+
           {/* Top-Left */}
           <div className="absolute top-0 left-0 -mt-2 -ml-2 text-ethereal-primary/20 pointer-events-none -rotate-90">
             <motion.svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <motion.path 
-                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{ duration: 2.2, ease: "easeInOut", delay: 0.3 }}
               />
-              <motion.path 
-                d="M10 90L90 10" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90L90 10"
+                stroke="currentColor"
                 strokeWidth="1"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
@@ -89,21 +89,21 @@ export default function Login() {
               />
             </motion.svg>
           </div>
-          
+
           {/* Bottom-Left */}
           <div className="absolute bottom-0 left-0 -mb-4 -ml-4 text-ethereal-primary/20 pointer-events-none rotate-180">
             <motion.svg width="140" height="140" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <motion.path 
-                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{ duration: 2.5, ease: "easeInOut", delay: 0.4 }}
               />
-              <motion.path 
-                d="M10 90L90 10" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90L90 10"
+                stroke="currentColor"
                 strokeWidth="1"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
@@ -115,17 +115,17 @@ export default function Login() {
           {/* Bottom-Right */}
           <div className="absolute bottom-0 right-0 -mb-2 -mr-2 text-ethereal-primary/20 pointer-events-none rotate-90">
             <motion.svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <motion.path 
-                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90C20 50 50 20 90 10C80 50 50 80 10 90Z"
+                stroke="currentColor"
                 strokeWidth="1.5"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
                 transition={{ duration: 2.1, ease: "easeInOut", delay: 0.5 }}
               />
-              <motion.path 
-                d="M10 90L90 10" 
-                stroke="currentColor" 
+              <motion.path
+                d="M10 90L90 10"
+                stroke="currentColor"
                 strokeWidth="1"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}

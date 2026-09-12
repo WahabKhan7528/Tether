@@ -1,12 +1,15 @@
 import { useRadio } from '../context/RadioContext';
 import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import RadyoPlayer from './RadyoPlayer';
 
 export default function GlobalRadioWidget() {
   const { currentTrack } = useRadio();
+  const { user } = useAuth();
   const location = useLocation();
 
-  if (location.pathname === '/radyo' || location.pathname === '/login' || location.pathname === '/signup') {
+  // Only show for authenticated users, and not on the radyo page itself
+  if (!user || location.pathname === '/radyo') {
     return null;
   }
 

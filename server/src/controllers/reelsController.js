@@ -38,7 +38,8 @@ async function getReels(req, res, next) {
         .populate('savedBy', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       SavedReel.countDocuments(filter),
     ]);
 

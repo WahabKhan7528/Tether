@@ -1,7 +1,8 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import toast from 'react-hot-toast';
 import { getMe } from '../api/auth';
 import * as authApi from '../api/auth';
+import { useQueryClient } from '@tanstack/react-query';
 
 const AuthContext = createContext(null);
 const AuthDispatchContext = createContext(null);
@@ -9,13 +10,18 @@ const AuthDispatchContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   // ── Listen for forced logout events from the Axios interceptor ────────────
   useEffect(() => {
-    const handleLogout = () => setUser(null);
+    const handleLogout = () => {
+      setUser(null);
+      queryClient.clear();
+      localStorage.removeItem('lastPlayedTrackId');
+    };
     window.addEventListener('auth:logout', handleLogout);
     return () => window.removeEventListener('auth:logout', handleLogout);
-  }, []);
+  }, [queryClient]);
 
   // ── Bootstrap — attempt to restore session from HttpOnly cookies ──────────
   // We call /api/auth/me on mount. If the accessToken cookie is valid (or the
@@ -52,7 +58,9 @@ export function AuthProvider({ children }) {
       // best effort — cookies will expire naturally
     }
     setUser(null);
-  }, []);
+    queryClient.clear();
+    localStorage.removeItem('lastPlayedTrackId');
+  }, [queryClient]);
 
   // ── Refresh user data from server ─────────────────────────────────────────
   const refreshUser = useCallback(async () => {
@@ -71,15 +79,7 @@ export function AuthProvider({ children }) {
   const isPaired = isAuthenticated && user.isPaired;
   const onboardingComplete = isAuthenticated && user.onboardingComplete;
 
-  // ── Polling for Partner Connection ──────────────────────────────────────────
-  useEffect(() => {
-    if (isAuthenticated && !isPaired) {
-      const interval = setInterval(() => {
-        refreshUser();
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated, isPaired, refreshUser]);
+  // Polling was removed in favor of Socket.IO 'partner_joined' events in SocketContext.
 
   // ── Toast Notification when Partner Connects ───────────────────────────────
   const prevAuth = useRef({ isAuthenticated: false, isPaired: false });
@@ -94,32 +94,32 @@ export function AuthProvider({ children }) {
     prevAuth.current = { isAuthenticated, isPaired };
   }, [isAuthenticated, isPaired]);
 
+  const dispatchValue = useMemo(() => ({
+    login,
+    signup,
+    logout,
+    refreshUser,
+    updateUser,
+    setUser,
+  }), [login, signup, logout, refreshUser, updateUser, setUser]);
+
+  const authValue = useMemo(() => ({
+    user,
+    loading,
+    isAuthenticated,
+    isPaired,
+    onboardingComplete,
+    login,
+    signup,
+    logout,
+    refreshUser,
+    updateUser,
+    setUser,
+  }), [user, loading, isAuthenticated, isPaired, onboardingComplete, login, signup, logout, refreshUser, updateUser, setUser]);
+
   return (
-    <AuthDispatchContext.Provider
-      value={{
-        login,
-        signup,
-        logout,
-        refreshUser,
-        updateUser,
-        setUser,
-      }}
-    >
-      <AuthContext.Provider
-        value={{
-          user,
-          loading,
-          isAuthenticated,
-          isPaired,
-          onboardingComplete,
-          login,
-          signup,
-          logout,
-          refreshUser,
-          updateUser,
-          setUser,
-        }}
-      >
+    <AuthDispatchContext.Provider value={dispatchValue}>
+      <AuthContext.Provider value={authValue}>
         {children}
       </AuthContext.Provider>
     </AuthDispatchContext.Provider>

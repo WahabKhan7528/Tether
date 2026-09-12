@@ -10,10 +10,8 @@ import BackgroundTheme from './components/BackgroundTheme';
 import GlobalRadioWidget from './components/GlobalRadioWidget';
 import LoadingSpinner, { FullPageLoader } from './components/LoadingSpinner';
 import PageChangeLoader from './components/PageChangeLoader';
-
-
-// ─── Code-Split Pages ─────────────────────────────────────────────────────────
-const Landing = lazy(() => import('./pages/Landing'));
+import AuthLayout from './components/layouts/AuthLayout';
+import MainLayout from './components/layouts/MainLayout';
 const Login = lazy(() => import('./pages/Login'));
 const Signup = lazy(() => import('./pages/Signup'));
 const Onboarding = lazy(() => import('./pages/Onboarding'));
@@ -29,6 +27,7 @@ const LetterDetail = lazy(() => import('./pages/LetterDetail'));
 const Gallery = lazy(() => import('./pages/Gallery'));
 const Profile = lazy(() => import('./pages/Profile'));
 const Radyo = lazy(() => import('./pages/Radyo'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 import { SocketProvider } from './context/SocketContext';
 
@@ -40,11 +39,7 @@ export default function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <SocketProvider>
-            {/* Global Background Theme based on mood/dark mode */}
-            <BackgroundTheme />
-
-            {/* Toast notifications */}
+          <SocketProvider>            {/* Toast notifications */}
             <Toaster
               position="bottom-center"
               toastOptions={{
@@ -80,42 +75,43 @@ export default function App() {
               <Suspense fallback={<FullPageLoader />}>
                 <Routes>
                   {/* Root redirect */}
-                  <Route path="/" element={<Landing />} />
+                  <Route path="/" element={<Navigate to="/login" replace />} />
 
                   {/* Public auth pages */}
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/signup" element={<Signup />} />
-
-                  {/* Authenticated — onboarding (skip onboarding check to avoid redirect loop) */}
-                  <Route
-                    path="/onboarding"
-                    element={
-                      <ProtectedRoute skipOnboardingCheck>
-                        <Onboarding />
-                      </ProtectedRoute>
-                    }
-                  />
+                  <Route element={<AuthLayout />}>
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    {/* Authenticated — onboarding (skip onboarding check to avoid redirect loop) */}
+                    <Route
+                      path="/onboarding"
+                      element={
+                        <ProtectedRoute skipOnboardingCheck>
+                          <Onboarding />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
 
                   {/* Authenticated + Onboarded + Paired */}
-                  <Route path="/dashboard" element={<PairedRoute><Dashboard /></PairedRoute>} />
-                  <Route path="/memories" element={<PairedRoute><Memories /></PairedRoute>} />
-                  <Route path="/memories/new" element={<PairedRoute><NewMemory /></PairedRoute>} />
-                  <Route path="/memories/:id/edit" element={<PairedRoute><EditMemory /></PairedRoute>} />
-                  <Route path="/reels" element={<PairedRoute><Reels /></PairedRoute>} />
-                  <Route path="/reels/new" element={<PairedRoute><NewReel /></PairedRoute>} />
-                  <Route path="/letters" element={<PairedRoute><Letters /></PairedRoute>} />
-                  <Route path="/letters/new" element={<PairedRoute><LetterEditor /></PairedRoute>} />
-                  <Route path="/letters/:id/edit" element={<PairedRoute><LetterEditor /></PairedRoute>} />
-                  <Route path="/letters/:id" element={<PairedRoute><LetterDetail /></PairedRoute>} />
-                  <Route path="/gallery" element={<PairedRoute><Gallery /></PairedRoute>} />
-                  <Route path="/profile" element={<PairedRoute><Profile /></PairedRoute>} />
-                  <Route path="/radyo" element={<PairedRoute><Radyo /></PairedRoute>} />
-
-                  {/* Catch-all */}
-                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                  <Route element={<MainLayout />}>
+                    <Route path="/dashboard" element={<PairedRoute><Dashboard /></PairedRoute>} />
+                    <Route path="/memories" element={<PairedRoute><Memories /></PairedRoute>} />
+                    <Route path="/memories/new" element={<PairedRoute><NewMemory /></PairedRoute>} />
+                    <Route path="/memories/:id/edit" element={<PairedRoute><EditMemory /></PairedRoute>} />
+                    <Route path="/reels" element={<PairedRoute><Reels /></PairedRoute>} />
+                    <Route path="/reels/new" element={<PairedRoute><NewReel /></PairedRoute>} />
+                    <Route path="/letters" element={<PairedRoute><Letters /></PairedRoute>} />
+                    <Route path="/letters/new" element={<PairedRoute><LetterEditor /></PairedRoute>} />
+                    <Route path="/letters/:id/edit" element={<PairedRoute><LetterEditor /></PairedRoute>} />
+                    <Route path="/letters/:id" element={<PairedRoute><LetterDetail /></PairedRoute>} />
+                    <Route path="/gallery" element={<PairedRoute><Gallery /></PairedRoute>} />
+                    <Route path="/profile" element={<PairedRoute><Profile /></PairedRoute>} />
+                    <Route path="/radyo" element={<PairedRoute><Radyo /></PairedRoute>} />
+                    {/* Catch-all */}
+                    <Route path="*" element={<NotFound />} />
+                  </Route>
                 </Routes>
               </Suspense>
-              <GlobalRadioWidget />
             </RadioProvider>
           </SocketProvider>
         </AuthProvider>

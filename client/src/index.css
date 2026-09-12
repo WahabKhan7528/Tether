@@ -48,6 +48,17 @@
     --color-error: 255 69 58;
   }
 
+  /* Fixed Auth Theme (Sad Dark Mode) */
+  .theme-auth {
+    --color-surface: 20 20 20;
+    --color-surface-dim: 30 30 30;
+    --color-outline: 44 44 44;
+    --color-primary: 165 123 90; /* #A57B5A - Darker Bronze/Caramel */
+    --color-primary-container: 51 51 51;
+    --color-tertiary: 245 245 245;
+    --color-error: 255 69 58;
+  }
+
   html {
     scroll-behavior: auto;
     -webkit-text-size-adjust: 100%;
