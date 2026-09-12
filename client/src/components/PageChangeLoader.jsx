@@ -1,4 +1,4 @@
-import { useState, useLayoutEffect } from 'react';
+import { useState, useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NatureDotsLoader } from './LoadingSpinner';
@@ -6,12 +6,19 @@ import { NatureDotsLoader } from './LoadingSpinner';
 export default function PageChangeLoader() {
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const isFirstRender = useRef(true);
 
   useLayoutEffect(() => {
+    // Never show artificial page transition loader on initial website open
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+
     setIsLoading(true);
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 600); // 600ms loader duration
+    }, 400);
 
     return () => clearTimeout(timer);
   }, [location.pathname]);

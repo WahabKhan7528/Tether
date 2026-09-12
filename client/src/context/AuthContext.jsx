@@ -8,14 +8,16 @@ const AuthContext = createContext(null);
 const AuthDispatchContext = createContext(null);
 
 export function AuthProvider({ children }) {
+  const hasSessionHint = typeof window !== 'undefined' && Boolean(localStorage.getItem('tether_has_session'));
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(hasSessionHint);
   const queryClient = useQueryClient();
 
   // ── Listen for forced logout events from the Axios interceptor ────────────
   useEffect(() => {
     const handleLogout = () => {
       setUser(null);
+      localStorage.removeItem('tether_has_session');
       queryClient.clear();
       localStorage.removeItem('lastPlayedTrackId');
     };
@@ -24,14 +26,40 @@ export function AuthProvider({ children }) {
   }, [queryClient]);
 
   // ── Bootstrap — attempt to restore session from HttpOnly cookies ──────────
-  // We call /api/auth/me on mount. If the accessToken cookie is valid (or the
-  // refreshToken cookie allows silent rotation), we get the user back.
-  // No localStorage needed — cookies are browser-managed.
+  // If hasSessionHint is false, loading is already false so public pages render instantly.
+  // We still call /api/auth/me to verify session or wake up the server.
   useEffect(() => {
+    let isMounted = true;
+    // Fallback timeout: if the server takes longer than 4s on cold start, release loading
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setLoading(false);
+    }, 4000);
+
     getMe()
-      .then((res) => setUser(res.data.data.user))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+      .then((res) => {
+        if (!isMounted) return;
+        const u = res.data?.data?.user;
+        setUser(u);
+        if (u) {
+          localStorage.setItem('tether_has_session', 'true');
+        } else {
+          localStorage.removeItem('tether_has_session');
+        }
+      })
+      .catch(() => {
+        if (!isMounted) return;
+        setUser(null);
+        localStorage.removeItem('tether_has_session');
+      })
+      .finally(() => {
+        clearTimeout(safetyTimer);
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   // ── Login ──────────────────────────────────────────────────────────────────
@@ -39,6 +67,7 @@ export function AuthProvider({ children }) {
     const res = await authApi.login(credentials);
     const { user: u } = res.data.data;
     setUser(u);
+    localStorage.setItem('tether_has_session', 'true');
     return u;
   }, []);
 
@@ -47,6 +76,7 @@ export function AuthProvider({ children }) {
     const res = await authApi.signup(data);
     const { user: u } = res.data.data;
     setUser(u);
+    localStorage.setItem('tether_has_session', 'true');
     return u;
   }, []);
 
@@ -58,6 +88,7 @@ export function AuthProvider({ children }) {
       // best effort — cookies will expire naturally
     }
     setUser(null);
+    localStorage.removeItem('tether_has_session');
     queryClient.clear();
     localStorage.removeItem('lastPlayedTrackId');
   }, [queryClient]);

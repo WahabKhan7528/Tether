@@ -21,8 +21,15 @@ export default function Signup() {
     inviteCode: '',
   });
 
-  if (!loading && user) return <Navigate to="/onboarding" replace />;
-  if (loading) return null;
+  // Already authenticated
+  if (user) return <Navigate to="/onboarding" replace />;
+  if (loading && typeof window !== 'undefined' && Boolean(localStorage.getItem('tether_has_session'))) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-transparent">
+        <LoadingSpinner size="md" />
+      </div>
+    );
+  }
 
   const update = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
 

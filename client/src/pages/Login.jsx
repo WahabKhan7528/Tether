@@ -11,15 +11,28 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [wakingUpServer, setWakingUpServer] = useState(false);
 
   // Already authenticated
-  if (!loading && user) return <Navigate to={user.onboardingComplete ? '/dashboard' : '/onboarding'} replace />;
-  if (loading) return null;
+  if (user) return <Navigate to={user.onboardingComplete ? '/dashboard' : '/onboarding'} replace />;
+  if (loading && typeof window !== 'undefined' && Boolean(localStorage.getItem('tether_has_session'))) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-transparent">
+        <LoadingSpinner size="md" />
+      </div>
+    );
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSubmitting(true);
+    setWakingUpServer(false);
+
+    const wakeTimer = setTimeout(() => {
+      setWakingUpServer(true);
+    }, 3000);
+
     try {
       const u = await login(form);
       // Route based on onboarding state
@@ -27,7 +40,9 @@ export default function Login() {
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong. Please try again.');
     } finally {
+      clearTimeout(wakeTimer);
       setSubmitting(false);
+      setWakingUpServer(false);
     }
   };
 
@@ -168,6 +183,11 @@ export default function Login() {
               <button type="submit" disabled={submitting} className="btn-primary w-full py-4 text-lg">
                 {submitting ? <ThreeDotsLoader size="md" /> : 'Sign in'}
               </button>
+              {wakingUpServer && (
+                <p className="text-xs text-ethereal-tertiary/70 text-center mt-3 animate-pulse">
+                  Waking up server instance, please hold on...
+                </p>
+              )}
             </div>
           </form>
 

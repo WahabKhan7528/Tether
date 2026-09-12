@@ -12,8 +12,8 @@ import LoadingSpinner, { FullPageLoader } from './components/LoadingSpinner';
 import PageChangeLoader from './components/PageChangeLoader';
 import AuthLayout from './components/layouts/AuthLayout';
 import MainLayout from './components/layouts/MainLayout';
-const Login = lazy(() => import('./pages/Login'));
-const Signup = lazy(() => import('./pages/Signup'));
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 const Onboarding = lazy(() => import('./pages/Onboarding'));
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 const Memories = lazy(() => import('./pages/Memories'));
@@ -75,7 +75,19 @@ export default function App() {
               <Suspense fallback={<FullPageLoader />}>
                 <Routes>
                   {/* Root redirect */}
-                  <Route path="/" element={<Navigate to="/login" replace />} />
+                  <Route
+                    path="/"
+                    element={
+                      <Navigate
+                        to={
+                          typeof window !== 'undefined' && localStorage.getItem('tether_has_session')
+                            ? '/dashboard'
+                            : '/login'
+                        }
+                        replace
+                      />
+                    }
+                  />
 
                   {/* Public auth pages */}
                   <Route element={<AuthLayout />}>
