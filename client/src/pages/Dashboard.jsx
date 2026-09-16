@@ -12,13 +12,12 @@ import LoadingSpinner from '../components/LoadingSpinner';
 
 
 import { motion } from 'framer-motion';
-import { Camera, Film, Images, BookHeart, CalendarHeart, Sparkles, Clock, Heart, Compass, FolderHeart, ArrowRight, Leaf, Smile, Frown, User, Users, ListTodo, Check, Star, Mail, Copy } from 'lucide-react';
+import { Camera, Film, Images, BookHeart, CalendarHeart, Sparkles, Clock, Heart, Compass, FolderHeart, ArrowRight, Leaf, Smile, Frown, User, Users, ListTodo, Check, Star, Mail, Copy, MapPin } from 'lucide-react';
 import PartnerStatusWidget from '../components/PartnerStatusWidget';
 import IdeasJar from '../components/IdeasJar';
+import { useSocket } from '../context/SocketContext';
 import MapTab from '../components/MapTab';
 import PromptTab from '../components/PromptTab';
-import DistanceWidget from '../components/widgets/DistanceWidget';
-
 function daysBetween(date1, date2) {
   const d1 = new Date(date1);
   const d2 = new Date(date2);
@@ -39,6 +38,7 @@ function capitalize(str) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const socket = useSocket();
   const [activeTab, setActiveTab] = useState('overview');
 
   const results = useQueries({
@@ -179,8 +179,25 @@ export default function Dashboard() {
               </div>
             )}
             <PartnerStatusWidget partnerName={partnerName} initialPartnerStatus={partnerStatus} />
-            <div className="mt-6 w-full max-w-3xl">
-              <DistanceWidget partner={partner} />
+            {/* I'm Home Button */}
+            <div className="mt-6">
+              <button
+                onClick={() => {
+                  if (socket) {
+                    socket.emit('im_home');
+                    import('react-hot-toast').then(({ toast }) =>
+                      toast('Partner notified that you are home', {
+                        icon: null,
+                        style: { borderRadius: '16px', fontSize: '14px' },
+                      })
+                    );
+                  }
+                }}
+                className="inline-flex items-center gap-3 py-3 px-6 rounded-2xl bg-ethereal-surface-dim/60 backdrop-blur-md border border-ethereal-primary/25 text-ethereal-tertiary/80 hover:border-ethereal-primary/60 hover:text-ethereal-primary hover:bg-ethereal-primary/5 transition-all duration-300 group shadow-ambient"
+              >
+                <MapPin size={16} className="text-ethereal-primary/60 group-hover:text-ethereal-primary transition-colors" />
+                <span className="text-sm font-semibold tracking-wide">I am Home</span>
+              </button>
             </div>
           </motion.div>
         </div>

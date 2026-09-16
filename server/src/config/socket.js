@@ -20,6 +20,7 @@ const EVENT_RATE_LIMITS = {
   typing_letter_start: 10,
   typing_letter_stop:  10,
   content_updated:     10,
+  im_home:             3,
 };
 
 /**
@@ -86,13 +87,18 @@ function initSocket(server) {
   // ─── Authentication Middleware ──────────────────────────────────────────────
   io.use(async (socket, next) => {
     try {
-      const cookieHeader = socket.handshake.headers.cookie;
-      if (!cookieHeader) {
-        return next(new Error('Authentication error'));
-      }
+      // Prefer the token passed explicitly in the handshake auth object (avoids
+      // SameSite=lax cookie restrictions on cross-origin WS upgrades in dev).
+      // Fall back to the HttpOnly cookie for production same-origin connections.
+      let token = socket.handshake.auth?.token;
 
-      const cookies = cookie.parse(cookieHeader);
-      const token = cookies[ACCESS_COOKIE_NAME];
+      if (!token) {
+        const cookieHeader = socket.handshake.headers.cookie;
+        if (cookieHeader) {
+          const cookies = cookie.parse(cookieHeader);
+          token = cookies[ACCESS_COOKIE_NAME];
+        }
+      }
 
       if (!token) {
         return next(new Error('Authentication error'));
@@ -193,6 +199,15 @@ function initSocket(server) {
     socket.on('typing_letter_stop', () => {
       if (isRateLimited('typing_letter_stop')) return;
       socket.to(room).emit('partner_stopped_typing_letter');
+    });
+
+    // ─── I'm Home ────────────────────────────────────────────────────────────
+    socket.on('im_home', () => {
+      if (isRateLimited('im_home')) return;
+      socket.to(room).emit('partner_is_home', {
+        senderName: socket.user.name,
+        senderId:   socket.user._id,
+      });
     });
 
     // ─── Feed / Content Updates ──────────────────────────────────────────────

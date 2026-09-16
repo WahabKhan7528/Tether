@@ -409,6 +409,22 @@ async function uploadAvatar(req, res, next) {
   }
 }
 
+/**
+ * GET /api/v1/auth/socket-token
+ * Protected — requires a valid access cookie.
+ * Returns the raw access token so the client can pass it in the Socket.IO
+ * handshake auth object, bypassing SameSite=lax cross-origin cookie issues.
+ */
+async function socketToken(req, res, next) {
+  try {
+    const token = req.cookies[ACCESS_COOKIE_NAME];
+    if (!token) return next(createError('Unauthorized', 401, 'UNAUTHORIZED'));
+    return res.json({ success: true, data: { token } });
+  } catch (err) {
+    next(err);
+  }
+}
+
 module.exports = {
   signup,
   login,
@@ -421,4 +437,5 @@ module.exports = {
   completeOnboarding,
   uploadAvatar,
   avatarUpload,
+  socketToken,
 };

@@ -15,6 +15,7 @@ const {
   completeOnboarding,
   uploadAvatar,
   avatarUpload,
+  socketToken,
 } = require('../controllers/authController');
 const { authenticate } = require('../middleware/auth');
 const validate = require('../middleware/validate');
@@ -79,5 +80,6 @@ router.patch('/partner', authenticate, updatePartnerValidators, validate, update
 router.post('/me/avatar', authenticate, avatarUpload.single('avatar'), uploadAvatar);
 router.post('/change-password', authenticate, changePasswordValidators, validate, changePassword);
 router.post('/onboarding', authenticate, onboardingValidators, validate, completeOnboarding);
+router.get('/socket-token', authenticate, socketToken);
 
 module.exports = router;
