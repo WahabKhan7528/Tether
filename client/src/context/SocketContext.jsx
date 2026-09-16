@@ -25,11 +25,11 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    // Derive the backend origin from VITE_API_URL for both dev and prod.
-    // In prod VITE_API_URL = https://tether-l3e0.onrender.com/api/v1 (set in Vercel env vars).
-    // Using window.location.origin in prod would point at Vercel, which has no Socket.IO server.
+    // apiBase is the full API URL (e.g. https://tether-l3e0.onrender.com/api/v1).
+    // new URL().origin strips the path, giving just the server root — robust
+    // regardless of whether VITE_API_URL contains /api/v1, /api, or any other path.
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-    const serverOrigin = apiBase.replace('/api/v1', '');
+    const serverOrigin = new URL(apiBase).origin; // e.g. https://tether-l3e0.onrender.com
 
     let socketInstance;
 
