@@ -25,11 +25,19 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    // apiBase is the full API URL (e.g. https://tether-l3e0.onrender.com/api/v1).
-    // new URL().origin strips the path, giving just the server root — robust
-    // regardless of whether VITE_API_URL contains /api/v1, /api, or any other path.
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
-    const serverOrigin = new URL(apiBase).origin; // e.g. https://tether-l3e0.onrender.com
+    // In production the Vercel proxy rewrites /api/* → https://tether-l3e0.onrender.com/api/*
+    // and /socket.io/* → the same backend, so we can use relative URLs.
+    // In development we talk directly to localhost:5000.
+    const isProd = import.meta.env.PROD;
+    const apiBase = isProd
+      ? '/api/v1'
+      : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1');
+
+    // For Socket.IO we need an absolute origin. In production Socket.IO also
+    // goes through the Vercel proxy (same origin), so we can use window.location.origin.
+    const serverOrigin = isProd
+      ? window.location.origin
+      : new URL(apiBase).origin; // e.g. http://localhost:5000
 
     let socketInstance;
 
@@ -37,19 +45,26 @@ export const SocketProvider = ({ children }) => {
     // handshake auth object. This avoids the SameSite=lax cross-origin cookie
     // restriction that silently drops the cookie on WebSocket upgrade requests.
     fetch(`${apiBase}/auth/socket-token`, { credentials: 'include' })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`socket-token endpoint returned ${res.status}. Check VITE_API_URL includes /api/v1`);
+        }
+        return res.json();
+      })
       .then(({ data }) => {
+        if (!data?.token) throw new Error('socket-token response missing token field');
+
         socketInstance = io(serverOrigin, {
           withCredentials: true,
           transports: ['websocket', 'polling'],
-          auth: { token: data?.token },
+          auth: { token: data.token },
         });
 
         registerListeners(socketInstance);
         setSocket(socketInstance);
       })
       .catch((err) => {
-        console.error('[Socket] Failed to fetch socket token:', err);
+        console.error('[Socket] Failed to fetch socket token:', err.message);
       });
 
     function registerListeners(s) {

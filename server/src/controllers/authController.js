@@ -378,8 +378,12 @@ async function uploadAvatar(req, res, next) {
 
     const dynamicId = req.user.coupleId?._id || req.user.coupleId || req.user._id;
     const key = `avatars/${dynamicId}/${req.file.filename}`;
-    const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
-    const url = `${serverUrl}/uploads/${key}`;
+    const serverUrl = process.env.SERVER_URL;
+    if (!serverUrl) {
+      console.error('[Avatar] SERVER_URL env var is not set! Avatar URL will be broken in production.');
+    }
+    const base = serverUrl || 'http://localhost:5000';
+    const url = `${base}/uploads/${key}`;
 
     const existing = await User.findById(req.user._id).select('+avatarFileId');
     if (existing?.avatarFileId) {
