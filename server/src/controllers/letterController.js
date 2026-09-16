@@ -2,6 +2,15 @@
 
 const LetterPage = require('../models/LetterPage');
 const { createError } = require('../middleware/errorHandler');
+const { encrypt, decrypt } = require('../utils/fieldEncrypt');
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function parsePagination(query) {
+  const page = Math.max(1, parseInt(query.page) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || 20));
+  return { page, limit, skip: (page - 1) * limit };
+}
 
 // ─── Slug generation ──────────────────────────────────────────────────────────
 
@@ -27,12 +36,25 @@ function randomSuffix() {
 
 async function getLetters(req, res, next) {
   try {
-    const letters = await LetterPage.find({ coupleId: req.user.coupleId })
-      .populate('createdBy', 'name')
-      .sort({ createdAt: -1 })
-      .lean();
+    const { page, limit, skip } = parsePagination(req.query);
+    const filter = { coupleId: req.coupleId };
 
-    return res.json({ success: true, data: letters });
+    const [letters, total] = await Promise.all([
+      LetterPage.find(filter)
+        .select('-content') // Task 10: exclude content from list
+        .populate('createdBy', 'name')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      LetterPage.countDocuments(filter),
+    ]);
+
+    return res.json({
+      success: true,
+      data: letters,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     next(err);
   }
@@ -44,10 +66,17 @@ async function getLetter(req, res, next) {
   try {
     const letter = await LetterPage.findOne({
       _id: req.params.id,
-      coupleId: req.user.coupleId,
+      coupleId: req.coupleId,
     }).populate('createdBy', 'name').lean();
 
     if (!letter) return next(createError('Letter not found', 404, 'NOT_FOUND'));
+
+    if (letter.content) {
+      letter.content.greeting = decrypt(letter.content.greeting);
+      letter.content.body     = decrypt(letter.content.body);
+      letter.content.closing  = decrypt(letter.content.closing);
+    }
+
     return res.json({ success: true, data: letter });
   } catch (err) {
     next(err);
@@ -62,10 +91,17 @@ async function getLetterBySlug(req, res, next) {
   try {
     const letter = await LetterPage.findOne({
       slug:     req.params.slug,
-      coupleId: req.user.coupleId,
+      coupleId: req.coupleId,
     }).populate('createdBy', 'name').lean();
 
     if (!letter) return next(createError('Letter not found', 404, 'NOT_FOUND'));
+
+    if (letter.content) {
+      letter.content.greeting = decrypt(letter.content.greeting);
+      letter.content.body     = decrypt(letter.content.body);
+      letter.content.closing  = decrypt(letter.content.closing);
+    }
+
     return res.json({ success: true, data: letter });
   } catch (err) {
     next(err);
@@ -88,13 +124,23 @@ async function createLetter(req, res, next) {
 
       // eslint-disable-next-line no-await-in-loop
       const letter = await LetterPage.create({
-        coupleId:  req.user.coupleId,
+        coupleId:  req.coupleId,
         slug,
         title:     title.trim(),
         templateId: templateId || 'classic',
-        content:   content || { greeting: '', body: '', closing: '' },
+        content: {
+          greeting: encrypt(content?.greeting || ''),
+          body:     encrypt(content?.body || ''),
+          closing:  encrypt(content?.closing || ''),
+        },
         createdBy: req.user._id,
       });
+
+      if (letter.content) {
+        letter.content.greeting = decrypt(letter.content.greeting);
+        letter.content.body     = decrypt(letter.content.body);
+        letter.content.closing  = decrypt(letter.content.closing);
+      }
 
       return res.status(201).json({ success: true, data: letter });
     } catch (err) {
@@ -115,15 +161,28 @@ async function updateLetter(req, res, next) {
     const updates = {};
     if (title !== undefined) updates.title = title.trim();
     if (templateId !== undefined) updates.templateId = templateId;
-    if (content !== undefined) updates.content = content;
+    if (content !== undefined) {
+      updates.content = {
+        greeting: encrypt(content.greeting || ''),
+        body:     encrypt(content.body || ''),
+        closing:  encrypt(content.closing || ''),
+      };
+    }
 
     const letter = await LetterPage.findOneAndUpdate(
-      { _id: req.params.id, coupleId: req.user.coupleId },
+      { _id: req.params.id, coupleId: req.coupleId },
       updates,
       { new: true, runValidators: true }
-    ).populate('createdBy', 'name');
+    ).populate('createdBy', 'name').lean();
 
     if (!letter) return next(createError('Letter not found', 404, 'NOT_FOUND'));
+
+    if (letter.content) {
+      letter.content.greeting = decrypt(letter.content.greeting);
+      letter.content.body     = decrypt(letter.content.body);
+      letter.content.closing  = decrypt(letter.content.closing);
+    }
+
     return res.json({ success: true, data: letter });
   } catch (err) {
     next(err);
@@ -136,7 +195,7 @@ async function deleteLetter(req, res, next) {
   try {
     const letter = await LetterPage.findOneAndDelete({
       _id: req.params.id,
-      coupleId: req.user.coupleId,
+      coupleId: req.coupleId,
     });
     if (!letter) return next(createError('Letter not found', 404, 'NOT_FOUND'));
 

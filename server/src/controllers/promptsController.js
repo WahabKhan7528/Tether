@@ -11,7 +11,7 @@ async function getTodayPrompt(req, res, next) {
     const dateString = today.toISOString().split('T')[0];
     const { id, text } = getPromptForDate(today);
 
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
 
     let promptRecord = await PromptAnswer.findOne({ coupleId, dateString }).lean();
 
@@ -58,7 +58,7 @@ async function answerPrompt(req, res, next) {
     const dateString = today.toISOString().split('T')[0];
     const { id, text } = getPromptForDate(today);
 
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
 
     let promptRecord = await PromptAnswer.findOne({ coupleId, dateString });
     

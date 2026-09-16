@@ -7,6 +7,7 @@ const Memory = require('../models/Memory');
 const Category = require('../models/Category');
 const { imageStorage } = require('../services/storage');
 const { createError } = require('../middleware/errorHandler');
+const signMediaUrl = require('../utils/signMediaUrl');
 
 // Absolute path to server/uploads/ — used for local upload key construction
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
@@ -24,18 +25,19 @@ function parsePagination(query) {
 async function getMemories(req, res, next) {
   try {
     const { page, limit, skip } = parsePagination(req.query);
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const filter = { coupleId };
 
     if (req.query.categoryId) {
       if (!mongoose.Types.ObjectId.isValid(req.query.categoryId)) {
         return next(createError('Invalid categoryId', 400, 'INVALID_ID'));
       }
-      filter.categoryId = req.query.categoryId;
+      filter.categoryId = new mongoose.Types.ObjectId(req.query.categoryId);
     }
 
     const [memories, total] = await Promise.all([
       Memory.find(filter)
+        .select('-images.key')
         .populate('categoryId', 'name icon')
         .populate('createdBy', 'name')
         .sort({ createdAt: -1 })
@@ -45,9 +47,19 @@ async function getMemories(req, res, next) {
       Memory.countDocuments(filter),
     ]);
 
+    const formattedMemories = memories.map(memory => {
+      if (memory.images && memory.images.length > 0) {
+        memory.images = memory.images.map(img => ({
+          ...img,
+          url: signMediaUrl(img.url),
+        }));
+      }
+      return memory;
+    });
+
     return res.json({
       success: true,
-      data: memories,
+      data: formattedMemories,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (err) {
@@ -61,13 +73,22 @@ async function getMemory(req, res, next) {
   try {
     const memory = await Memory.findOne({
       _id: req.params.id,
-      coupleId: req.user.coupleId,
+      coupleId: req.coupleId,
     })
+      .select('-images.key')
       .populate('categoryId', 'name icon')
       .populate('createdBy', 'name')
       .lean();
 
     if (!memory) return next(createError('Memory not found', 404, 'NOT_FOUND'));
+
+    if (memory.images && memory.images.length > 0) {
+      memory.images = memory.images.map(img => ({
+        ...img,
+        url: signMediaUrl(img.url),
+      }));
+    }
+
     return res.json({ success: true, data: memory });
   } catch (err) {
     next(err);
@@ -79,17 +100,18 @@ async function getMemory(req, res, next) {
 async function createMemory(req, res, next) {
   try {
     const { title, description, dateTaken, location, categoryId, coordinates } = req.body;
+    const coupleId = req.coupleId;
 
     if (categoryId) {
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
         return next(createError('Invalid categoryId', 400, 'INVALID_ID'));
       }
-      const cat = await Category.findOne({ _id: categoryId, coupleId: req.user.coupleId });
+      const cat = await Category.findOne({ _id: categoryId, coupleId });
       if (!cat) return next(createError('Category not found', 404, 'NOT_FOUND'));
     }
 
     const memory = await Memory.create({
-      coupleId: req.user.coupleId,
+      coupleId: coupleId,
       title: title.trim(),
       description: description?.trim() || '',
       dateTaken: dateTaken ? new Date(dateTaken) : null,
@@ -99,7 +121,15 @@ async function createMemory(req, res, next) {
       createdBy: req.user._id,
     });
 
-    return res.status(201).json({ success: true, data: memory });
+    const formattedMemory = {
+      ...memory.toObject(),
+      images: memory.images ? memory.images.map(img => ({
+        ...img.toObject ? img.toObject() : img,
+        url: signMediaUrl(img.url)
+      })) : []
+    };
+
+    return res.status(201).json({ success: true, data: formattedMemory });
   } catch (err) {
     next(err);
   }
@@ -110,6 +140,7 @@ async function createMemory(req, res, next) {
 async function updateMemory(req, res, next) {
   try {
     const { title, description, dateTaken, location, categoryId, coordinates } = req.body;
+    const coupleId = req.coupleId;
     // NOTE: 'images' is intentionally excluded — image management uses dedicated
     // upload endpoints (localUpload / presignUpload + confirmUpload).
 
@@ -117,7 +148,7 @@ async function updateMemory(req, res, next) {
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
         return next(createError('Invalid categoryId', 400, 'INVALID_ID'));
       }
-      const cat = await Category.findOne({ _id: categoryId, coupleId: req.user.coupleId });
+      const cat = await Category.findOne({ _id: categoryId, coupleId });
       if (!cat) return next(createError('Category not found', 404, 'NOT_FOUND'));
     }
 
@@ -131,14 +162,24 @@ async function updateMemory(req, res, next) {
     // images is NOT allowed here
 
     const memory = await Memory.findOneAndUpdate(
-      { _id: req.params.id, coupleId: req.user.coupleId },
+      { _id: req.params.id, coupleId },
       updates,
       { new: true, runValidators: true }
     )
+      .select('-images.key')
       .populate('categoryId', 'name icon')
-      .populate('createdBy', 'name');
+      .populate('createdBy', 'name')
+      .lean();
 
     if (!memory) return next(createError('Memory not found', 404, 'NOT_FOUND'));
+
+    if (memory.images && memory.images.length > 0) {
+      memory.images = memory.images.map(img => ({
+        ...img,
+        url: signMediaUrl(img.url),
+      }));
+    }
+
     return res.json({ success: true, data: memory });
   } catch (err) {
     next(err);
@@ -149,9 +190,10 @@ async function updateMemory(req, res, next) {
 
 async function deleteMemory(req, res, next) {
   try {
+    const coupleId = req.coupleId;
     const memory = await Memory.findOneAndDelete({
       _id: req.params.id,
-      coupleId: req.user.coupleId,
+      coupleId,
     });
     if (!memory) return next(createError('Memory not found', 404, 'NOT_FOUND'));
 
@@ -179,9 +221,10 @@ async function localUpload(req, res, next) {
     }
 
     // Verify memory ownership before attaching the image
+    const coupleId = req.coupleId;
     const memory = await Memory.findOne({
       _id: req.params.id,
-      coupleId: req.user.coupleId,
+      coupleId,
     });
 
     if (!memory) {
@@ -199,7 +242,15 @@ async function localUpload(req, res, next) {
     memory.images.push({ url, key, order });
     await memory.save();
 
-    return res.status(201).json({ success: true, data: memory });
+    const formattedMemory = {
+      ...memory.toObject(),
+      images: memory.images.map(img => ({
+        ...img.toObject ? img.toObject() : img,
+        url: signMediaUrl(img.url)
+      }))
+    };
+
+    return res.status(201).json({ success: true, data: formattedMemory });
   } catch (err) {
     // Best-effort cleanup on unexpected errors
     if (req.file?.path) {

@@ -17,23 +17,20 @@ const trackSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  url: {
-    type: String,
-    // Optional for backward compatibility with older files
-  },
   audioData: {
     type: Buffer,
   },
   contentType: {
     type: String,
   },
-  isCompressed: {
-    type: Boolean,
-    default: false,
-  },
+  url: {
+    type: String,
+  }
 }, {
   timestamps: true,
 });
+
+trackSchema.index({ coupleId: 1, createdAt: -1 });
 
 const Track = mongoose.model('Track', trackSchema);
 

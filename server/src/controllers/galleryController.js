@@ -6,6 +6,7 @@ const Memory = require('../models/Memory');
 const GalleryPhoto = require('../models/GalleryPhoto');
 const { imageStorage } = require('../services/storage');
 const { createError } = require('../middleware/errorHandler');
+const signMediaUrl = require('../utils/signMediaUrl');
 
 const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 
@@ -16,7 +17,7 @@ const UPLOADS_DIR = path.join(__dirname, '..', '..', 'uploads');
 
 async function getGallery(req, res, next) {
   try {
-    const coupleId = req.user.coupleId;
+    const coupleId = req.coupleId;
     const page     = Math.max(1, parseInt(req.query.page)  || 1);
     const limit    = Math.min(100, Math.max(1, parseInt(req.query.limit) || 30));
     const skip     = (page - 1) * limit;
@@ -25,7 +26,7 @@ async function getGallery(req, res, next) {
       // 1. Start with GalleryPhoto
       { $match: { coupleId: coupleId } },
       { $project: {
-          url: 1, key: 1, title: 1, caption: 1, dateTaken: 1,
+          url: 1, title: 1, caption: 1, dateTaken: 1,
           location: 1, coordinates: 1, uploadedBy: 1, createdAt: 1,
           source: { $literal: 'gallery' }, memoryId: { $literal: null }
         }
@@ -38,7 +39,7 @@ async function getGallery(req, res, next) {
             // Unwind images to get one document per image
             { $unwind: '$images' },
             { $project: {
-                _id: '$images._id', url: '$images.url', key: '$images.key',
+                _id: '$images._id', url: '$images.url',
                 order: '$images.order', source: { $literal: 'memory' },
                 memoryId: '$_id', title: 1, caption: { $literal: '' },
                 dateTaken: 1, location: 1, coordinates: 1, createdAt: 1
@@ -62,9 +63,15 @@ async function getGallery(req, res, next) {
     ];
 
     const result = await GalleryPhoto.aggregate(pipeline);
-    const paginated = result[0].data;
+    let paginated = result[0].data;
     const total = result[0].totalCount.length > 0 ? result[0].totalCount[0].count : 0;
     const totalPages = Math.ceil(total / limit);
+
+    // Sign ImageKit URLs
+    paginated = paginated.map((item) => ({
+      ...item,
+      url: signMediaUrl(item.url),
+    }));
 
     return res.json({
       success: true,
@@ -95,12 +102,12 @@ async function uploadGalleryPhoto(req, res, next) {
       } catch (e) { }
     }
 
-    const key = `gallery/${req.user.coupleId}/${req.file.filename}`;
+    const key = `gallery/${req.coupleId}/${req.file.filename}`;
     const serverUrl = process.env.SERVER_URL || 'http://localhost:5000';
     const url = `${serverUrl}/uploads/${key}`;
 
     const photo = await GalleryPhoto.create({
-      coupleId: req.user.coupleId,
+      coupleId: req.coupleId,
       uploadedBy: req.user._id,
       url,
       key,
@@ -111,7 +118,12 @@ async function uploadGalleryPhoto(req, res, next) {
       coordinates,
     });
 
-    return res.status(201).json({ success: true, data: photo });
+    const formattedPhoto = {
+      ...photo.toObject(),
+      url: signMediaUrl(photo.url),
+    };
+
+    return res.status(201).json({ success: true, data: formattedPhoto });
   } catch (err) {
     if (req.file?.path) {
       try { fs.unlinkSync(req.file.path); } catch (_) {}
@@ -127,7 +139,7 @@ async function deleteGalleryPhoto(req, res, next) {
   try {
     const photo = await GalleryPhoto.findOneAndDelete({
       _id: req.params.id,
-      coupleId: req.user.coupleId,
+      coupleId: req.coupleId,
     });
 
     if (!photo) {

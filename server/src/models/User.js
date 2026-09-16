@@ -107,7 +107,29 @@ const userSchema = new mongoose.Schema(
     hugsSent: {
       type: Number,
       default: 0,
-    }
+    },
+
+    // ── Security & Authentication ──────────────────────────────────────────────
+    loginFailures: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    lockUntil: {
+      type: Date,
+      default: null,
+      select: false,
+    },
+    tokenFamily: {
+      type: String, // UUID for tracking refresh token family reuse
+      default: null,
+      select: false,
+    },
+    tokenFamilyIssuedAt: {
+      type: Date,
+      default: null,
+      select: false,
+    },
   },
   { timestamps: true }
 );

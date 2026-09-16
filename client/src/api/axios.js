@@ -10,7 +10,7 @@ import axios from 'axios';
  *     dispatches 'auth:logout' event so AuthContext can clear state
  */
 const api = axios.create({
-  baseURL: import.meta.env.PROD ? '/api' : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api'),
+  baseURL: import.meta.env.PROD ? '/api/v1' : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1'),
   withCredentials: true,  // Required for HttpOnly cookie-based sessions
   headers: { 'Content-Type': 'application/json' },
 });

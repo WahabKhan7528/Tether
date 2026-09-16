@@ -2,14 +2,16 @@
 
 const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 const User = require('../models/User');
 const Couple = require('../models/Couple');
 const generateInviteCode = require('../utils/generateInviteCode');
-const { setAuthCookies, clearAuthCookies } = require('../utils/tokens');
+const { setAuthCookies, clearAuthCookies, ACCESS_COOKIE_NAME, REFRESH_COOKIE_NAME } = require('../utils/tokens');
 const { createError } = require('../middleware/errorHandler');
 const { createAvatarUpload } = require('../config/multer');
+const signMediaUrl = require('../utils/signMediaUrl');
 
 const avatarUpload = createAvatarUpload();
 
@@ -24,7 +26,7 @@ function formatUser(user, couple) {
     bio: user.bio || '',
     favouriteColour: user.favouriteColour || '',
     partnerKnowledge: user.partnerKnowledge || [],
-    avatarUrl: user.avatarUrl || null,
+    avatarUrl: signMediaUrl(user.avatarUrl) || null,
     currentStatus:      user.currentStatus || 'happy',
     hugsSent: user.hugsSent || 0,
     role: user.role,
@@ -100,12 +102,16 @@ async function signup(req, res, next) {
       role = 'admin';
     }
 
+    const tokenFamily = uuidv4();
+
     const user = new User({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       passwordHash: passwordHash,
       coupleId: couple._id,
       role: role,
+      tokenFamily: tokenFamily,
+      tokenFamilyIssuedAt: new Date(),
     });
     await user.save({ session });
 
@@ -114,7 +120,7 @@ async function signup(req, res, next) {
 
     await session.commitTransaction();
 
-    setAuthCookies(res, user._id);
+    setAuthCookies(res, user._id, tokenFamily);
 
     return res.status(201).json({
       success: true,
@@ -133,19 +139,43 @@ async function login(req, res, next) {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email: email.toLowerCase().trim() })
-      .select('+passwordHash')
+      .select('+passwordHash +loginFailures +lockUntil +tokenFamily')
       .populate('coupleId');
 
     if (!user) {
+      console.warn(`[Security - Audit] Failed login attempt for unknown email: ${email}`);
       return next(createError('Invalid email or password.', 401, 'INVALID_CREDENTIALS'));
+    }
+
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      console.warn(`[Security - Audit] Attempt to log into locked account: ${user._id}`);
+      return next(createError('Account locked due to too many failed attempts. Try again later.', 403, 'ACCOUNT_LOCKED'));
     }
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      user.loginFailures = (user.loginFailures || 0) + 1;
+      if (user.loginFailures >= 5) {
+        const lockTimeMs = user.loginFailures > 10 ? 24 * 60 * 60 * 1000 : 15 * 60 * 1000;
+        user.lockUntil = new Date(Date.now() + lockTimeMs);
+        console.warn(`[Security - Audit] Account locked for user: ${user._id} due to ${user.loginFailures} failed attempts.`);
+      } else {
+        console.warn(`[Security - Audit] Failed login attempt ${user.loginFailures} for user: ${user._id}`);
+      }
+      await user.save();
       return next(createError('Invalid email or password.', 401, 'INVALID_CREDENTIALS'));
     }
 
-    setAuthCookies(res, user._id);
+    if (user.loginFailures > 0) {
+      user.loginFailures = 0;
+      user.lockUntil = null;
+    }
+
+    user.tokenFamily = uuidv4();
+    user.tokenFamilyIssuedAt = new Date();
+    await user.save();
+
+    setAuthCookies(res, user._id, user.tokenFamily);
 
     return res.json({
       success: true,
@@ -160,14 +190,25 @@ async function refresh(req, res, next) {
   try {
 
     const { verifyRefreshToken } = require('../utils/tokens');
-    const token = req.cookies?.refreshToken;
+    const token = req.cookies?.[REFRESH_COOKIE_NAME];
     if (!token) return next(createError('No refresh token', 401, 'UNAUTHORIZED'));
 
     const decoded = verifyRefreshToken(token);
-    const user = await User.findById(decoded.userId).populate('coupleId');
+    const user = await User.findById(decoded.userId).select('+tokenFamily').populate('coupleId');
     if (!user) return next(createError('User not found', 401, 'UNAUTHORIZED'));
 
-    setAuthCookies(res, user._id);
+    // Token reuse detection (stolen refresh token)
+    if (decoded.family && user.tokenFamily && decoded.family !== user.tokenFamily) {
+      // Hijack detected! Clear family to revoke ALL refresh tokens for this user immediately
+      user.tokenFamily = null;
+      user.tokenFamilyIssuedAt = null;
+      await user.save();
+      const { clearAuthCookies } = require('../utils/tokens');
+      clearAuthCookies(res);
+      return next(createError('Session invalidated due to suspicious activity. Please log in again.', 401, 'UNAUTHORIZED'));
+    }
+
+    setAuthCookies(res, user._id, user.tokenFamily);
 
     return res.json({ success: true, data: { message: 'Session refreshed' } });
   } catch (_) {
@@ -177,7 +218,7 @@ async function refresh(req, res, next) {
 
 function logout(req, res) {
   try {
-    const token = req.cookies?.accessToken || req.cookies?.refreshToken;
+    const token = req.cookies?.[ACCESS_COOKIE_NAME] || req.cookies?.[REFRESH_COOKIE_NAME];
     if (token) {
       let decoded;
       try {
@@ -207,12 +248,15 @@ function logout(req, res) {
 
 async function me(req, res, next) {
   try {
-    const user = await User.findById(req.user._id).populate('coupleId');
-    if (!user) return next(createError('User not found', 404, 'NOT_FOUND'));
+    // req.user is already populated by authenticate(); avoid a redundant full User fetch.
+    // We only need to populate the coupleId reference that the auth middleware doesn't expand.
+    const couple = req.user.coupleId
+      ? await Couple.findById(req.user.coupleId).lean()
+      : null;
 
     return res.json({
       success: true,
-      data: { user: formatUser(user, user.coupleId) },
+      data: { user: formatUser(req.user, couple) },
     });
   } catch (err) {
     next(err);
@@ -290,7 +334,14 @@ async function changePassword(req, res, next) {
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     await user.save();
 
-    setAuthCookies(res, user._id);
+    // Rotate tokenFamily so any previously stolen refresh token is invalidated
+    user.tokenFamily = uuidv4();
+    user.tokenFamilyIssuedAt = new Date();
+    await user.save();
+
+    console.warn(`[Security - Audit] Password changed for user: ${user._id}`);
+
+    setAuthCookies(res, user._id, user.tokenFamily);
 
     return res.json({ success: true, data: { message: 'Password updated successfully.' } });
   } catch (err) {

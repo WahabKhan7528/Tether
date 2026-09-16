@@ -9,6 +9,7 @@ const ALWAYS_REQUIRED = [
   'JWT_REFRESH_SECRET',
   'ACCESS_TOKEN_EXPIRES_IN',
   'REFRESH_TOKEN_EXPIRES_IN',
+  'CSRF_SECRET',
 ];
 
 
@@ -39,8 +40,8 @@ function validateEnv() {
 
   // ─── Warn about weak JWT secrets ─────────────────────────────────────────────
   ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET'].forEach((key) => {
-    if (process.env[key]?.length < 32) {
-      console.warn(`[Tether] WARNING: ${key} is shorter than 32 characters. Use a stronger secret.`);
+    if (process.env[key]?.length < 64) {
+      console.warn(`[Tether] WARNING: ${key} is shorter than 64 characters. Use a stronger secret (run: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")`);
     }
   });
 

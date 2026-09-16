@@ -26,7 +26,8 @@ const galleryPhotoSchema = new mongoose.Schema(
     },
     key: {
       type: String,
-      required: true, // relative storage path e.g. gallery/{coupleId}/{filename}
+      required: true,
+      select: false, // Security: hide internal storage keys by default
     },
     title: {
       type: String,

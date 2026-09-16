@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Couple = require('../models/Couple');
 const User   = require('../models/User');
 const { createError } = require('../middleware/errorHandler');
+const signMediaUrl = require('../utils/signMediaUrl');
 
 function formatPartner(member, currentUserId) {
   if (!member || member._id.toString() === currentUserId.toString()) return null;
@@ -15,7 +16,7 @@ function formatPartner(member, currentUserId) {
     gender:             member.gender || null,
     bio:                member.bio || '',
     favouriteColour:    member.favouriteColour || '',
-    avatarUrl:          member.avatarUrl || null,
+    avatarUrl:          signMediaUrl(member.avatarUrl) || null,
     currentStatus:      member.currentStatus || 'happy',
     hugsSent:           member.hugsSent || 0,
     role:               member.role,
@@ -145,7 +146,7 @@ async function updateCouple(req, res, next) {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
 
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       { $set: updates },
@@ -167,7 +168,7 @@ async function addMilestone(req, res, next) {
   try {
     const { title, date, description } = req.body;
 
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       {
@@ -195,7 +196,7 @@ async function addMilestone(req, res, next) {
 
 async function deleteMilestone(req, res, next) {
   try {
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       { $pull: { milestones: { _id: req.params.itemId } } },
@@ -217,7 +218,7 @@ async function addBucketListItem(req, res, next) {
   try {
     const { title } = req.body;
 
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       {
@@ -245,26 +246,32 @@ async function addBucketListItem(req, res, next) {
 
 async function toggleBucketListItem(req, res, next) {
   try {
-
-    const current = await Couple.findOne(
-      { _id: req.user.coupleId, 'bucketList._id': req.params.itemId },
-      { 'bucketList.$': 1 }
-    );
-
-    if (!current || !current.bucketList[0]) {
-      return next(createError('Bucket list item not found', 404, 'NOT_FOUND'));
-    }
-
-    const newState = !current.bucketList[0].isCompleted;
-
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
+    
+    // Toggle using aggregation pipeline in update (MongoDB 4.2+)
     const couple = await Couple.findOneAndUpdate(
       { _id: coupleId, 'bucketList._id': req.params.itemId },
-      { $set: { 'bucketList.$.isCompleted': newState } },
+      [{
+        $set: {
+          bucketList: {
+            $map: {
+              input: '$bucketList',
+              as: 'item',
+              in: {
+                $cond: {
+                  if: { $eq: ['$$item._id', new mongoose.Types.ObjectId(req.params.itemId)] },
+                  then: { $mergeObjects: ['$$item', { isCompleted: { $not: '$$item.isCompleted' } }] },
+                  else: '$$item'
+                }
+              }
+            }
+          }
+        }
+      }],
       { new: true }
     ).populate('members', POPULATE_MEMBERS);
 
-    if (!couple) return next(createError('Couple not found', 404, 'NOT_FOUND'));
+    if (!couple) return next(createError('Couple or bucket list item not found', 404, 'NOT_FOUND'));
 
     return res.json({
       success: true,
@@ -277,7 +284,7 @@ async function toggleBucketListItem(req, res, next) {
 
 async function deleteBucketListItem(req, res, next) {
   try {
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       { $pull: { bucketList: { _id: req.params.itemId } } },
@@ -294,7 +301,7 @@ async function deleteBucketListItem(req, res, next) {
 async function addDateIdea(req, res, next) {
   try {
     const { title, description } = req.body;
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       {
@@ -319,7 +326,7 @@ async function addDateIdea(req, res, next) {
 
 async function deleteDateIdea(req, res, next) {
   try {
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const couple = await Couple.findByIdAndUpdate(
       coupleId,
       { $pull: { dateIdeas: { _id: req.params.itemId } } },

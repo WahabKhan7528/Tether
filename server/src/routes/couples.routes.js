@@ -26,6 +26,12 @@ const updateCoupleValidators = [
   body('anniversaryDate').optional({ nullable: true }).isISO8601().withMessage('Invalid date format'),
   body('relationshipStatus').optional().trim().isLength({ max: 40 }).withMessage('Relationship status too long'),
   body('coupleBio').optional().trim().isLength({ max: 200 }).withMessage('Couple bio too long'),
+  // Validate themeSong as a URL so arbitrary script payloads can't be stored
+  body('themeSong')
+    .optional({ nullable: true })
+    .trim()
+    .isURL({ require_protocol: true }).withMessage('themeSong must be a valid URL')
+    .isLength({ max: 500 }).withMessage('themeSong URL too long'),
 ];
 
 const joinCoupleValidators = [

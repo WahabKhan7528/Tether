@@ -16,4 +16,15 @@ function validateObjectId(param = 'id') {
   };
 }
 
-module.exports = { validateObjectId };
+/**
+ * Asserts req.user has a coupleId, and extracts it as a proper ObjectId.
+ * Attaches req.coupleId for use in controllers.
+ */
+function extractCoupleId(req, res, next) {
+  const raw = req.user.coupleId?._id || req.user.coupleId;
+  if (!raw) return next(createError('You must be paired.', 403, 'NOT_PAIRED'));
+  req.coupleId = new mongoose.Types.ObjectId(raw);
+  next();
+}
+
+module.exports = { validateObjectId, extractCoupleId };

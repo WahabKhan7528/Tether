@@ -17,6 +17,7 @@ import PartnerStatusWidget from '../components/PartnerStatusWidget';
 import IdeasJar from '../components/IdeasJar';
 import MapTab from '../components/MapTab';
 import PromptTab from '../components/PromptTab';
+import DistanceWidget from '../components/widgets/DistanceWidget';
 
 function daysBetween(date1, date2) {
   const d1 = new Date(date1);
@@ -177,8 +178,10 @@ export default function Dashboard() {
                 )}
               </div>
             )}
-            
             <PartnerStatusWidget partnerName={partnerName} initialPartnerStatus={partnerStatus} />
+            <div className="mt-6 w-full max-w-3xl">
+              <DistanceWidget partner={partner} />
+            </div>
           </motion.div>
         </div>
 
@@ -464,13 +467,13 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* My Info & Our Space Section */}
+        {/* My Info, Our Space & Distance Section */}
         {!isLoading && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12"
+            className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10"
           >
             {/* My Info Widget */}
             <div className="flex flex-col">
@@ -525,7 +528,7 @@ export default function Dashboard() {
             </div>
 
             {/* Our Space Widget */}
-            <div className="flex flex-col">
+            <div className="flex flex-col md:col-span-2 lg:col-span-1">
               <div className="flex items-center justify-between mb-6 px-2">
                 <div className="flex items-center gap-3">
                   <Users size={20} className="text-ethereal-primary" />

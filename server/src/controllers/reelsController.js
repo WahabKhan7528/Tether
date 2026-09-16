@@ -15,14 +15,14 @@ function parsePagination(query) {
 async function getReels(req, res, next) {
   try {
     const { page, limit, skip } = parsePagination(req.query);
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const filter = { coupleId };
 
     if (req.query.categoryId) {
       if (!mongoose.Types.ObjectId.isValid(req.query.categoryId)) {
         return next(createError('Invalid categoryId', 400, 'INVALID_ID'));
       }
-      filter.categoryId = req.query.categoryId;
+      filter.categoryId = new mongoose.Types.ObjectId(req.query.categoryId);
     }
 
     if (req.query.isDone !== undefined) {
@@ -57,7 +57,7 @@ async function getReels(req, res, next) {
 async function createReel(req, res, next) {
   try {
     const { url, platform, caption, note, categoryId } = req.body;
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
 
     if (categoryId) {
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -87,7 +87,7 @@ async function createReel(req, res, next) {
 async function updateReel(req, res, next) {
   try {
     const { url, platform, caption, note, isDone, categoryId } = req.body;
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
 
     if (categoryId) {
       if (!mongoose.Types.ObjectId.isValid(categoryId)) {
@@ -111,7 +111,8 @@ async function updateReel(req, res, next) {
       { new: true, runValidators: true }
     )
       .populate('categoryId', 'name icon')
-      .populate('savedBy', 'name');
+      .populate('savedBy', 'name')
+      .lean();
 
     if (!reel) return next(createError('Reel not found', 404, 'NOT_FOUND'));
     return res.json({ success: true, data: reel });
@@ -123,7 +124,7 @@ async function updateReel(req, res, next) {
 // DELETE /api/reels/:id
 async function deleteReel(req, res, next) {
   try {
-    const coupleId = req.user.coupleId?._id || req.user.coupleId;
+    const coupleId = req.coupleId;
     const reel = await SavedReel.findOneAndDelete({
       _id: req.params.id,
       coupleId,

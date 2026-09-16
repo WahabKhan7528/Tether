@@ -575,6 +575,29 @@ export default function Profile() {
                     </button>
                   </div>
                 </div>
+
+                <div className="pt-6 border-t border-ethereal-outline/10">
+                  <h3 className="text-lg font-heading font-medium text-ethereal-tertiary mb-1">App Preferences</h3>
+                  <p className="text-sm text-ethereal-tertiary/50 mb-4">Customize your app experience.</p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <label className="text-sm font-medium text-ethereal-tertiary/80 whitespace-nowrap">Distance Unit</label>
+                    <div className="flex gap-2">
+                      {['km', 'miles'].map((unit) => (
+                        <button
+                          key={unit}
+                          onClick={() => handleProfileSave('distanceUnit', unit)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 shadow-sm capitalize ${
+                            (user.distanceUnit || 'km') === unit
+                              ? 'bg-ethereal-primary text-white transform scale-105 shadow-md'
+                              : 'bg-transparent text-ethereal-tertiary/70 hover:bg-ethereal-primary/10 hover:text-ethereal-tertiary hover:shadow-sm border border-ethereal-outline/20'
+                          }`}
+                        >
+                          {unit}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </motion.div>

@@ -69,8 +69,6 @@ const coupleSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-
-
+coupleSchema.index({ members: 1 });
 const Couple = mongoose.model('Couple', coupleSchema);
 module.exports = Couple;

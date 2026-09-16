@@ -13,7 +13,6 @@ const letterPageSchema = new mongoose.Schema(
     slug: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       lowercase: true,
       match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'],
@@ -56,9 +55,8 @@ const letterPageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Unique slug index
-
-
+// Unique slug per couple
+letterPageSchema.index({ coupleId: 1, slug: 1 }, { unique: true });
 // Compound index for paginated fetches scoped to a couple
 letterPageSchema.index({ coupleId: 1, createdAt: -1 });
 

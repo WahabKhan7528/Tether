@@ -21,7 +21,7 @@ function startKeepalive(port) {
   if (process.env.NODE_ENV !== 'production') return;
   const SELF_URL = process.env.SERVER_URL || `http://localhost:${port}`;
   keepaliveTimer = setInterval(() => {
-    http.get(`${SELF_URL}/api/health`, (res) => {
+    http.get(`${SELF_URL}/api/v1/health`, (res) => {
       res.resume(); // discard body
     }).on('error', (err) => {
       console.warn('[Tether] Keepalive ping failed:', err.message);

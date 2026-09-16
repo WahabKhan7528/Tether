@@ -20,10 +20,12 @@ function generateAccessToken(userId) {
   });
 }
 
-function generateRefreshToken(userId) {
-  return jwt.sign({ userId: userId.toString() }, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d',
-  });
+function generateRefreshToken(userId, tokenFamily) {
+  return jwt.sign(
+    { userId: userId.toString(), family: tokenFamily }, 
+    process.env.JWT_REFRESH_SECRET, 
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d' }
+  );
 }
 
 // ─── Token verification ───────────────────────────────────────────────────────
@@ -40,6 +42,9 @@ function verifyRefreshToken(token) {
 
 const isProd = process.env.NODE_ENV === 'production';
 
+const ACCESS_COOKIE_NAME = isProd ? '__Host-psifi.access' : 'psifi.access';
+const REFRESH_COOKIE_NAME = isProd ? '__Host-psifi.refresh' : 'psifi.refresh';
+
 const BASE_COOKIE_OPTIONS = {
   httpOnly: true,              // JS cannot read these cookies
   secure: isProd,              // HTTPS only in production
@@ -50,21 +55,21 @@ const BASE_COOKIE_OPTIONS = {
  * Set both access and refresh tokens as HttpOnly cookies.
  * This is called after signup and login.
  */
-function setAuthCookies(res, userId) {
+function setAuthCookies(res, userId, tokenFamily = null) {
   const accessToken = generateAccessToken(userId);
-  const refreshToken = generateRefreshToken(userId);
+  const refreshToken = generateRefreshToken(userId, tokenFamily);
 
   // Access token cookie — 15 min
-  res.cookie('accessToken', accessToken, {
+  res.cookie(ACCESS_COOKIE_NAME, accessToken, {
     ...BASE_COOKIE_OPTIONS,
     maxAge: 15 * 60 * 1000, // 15 minutes in ms
   });
 
   // Refresh token cookie — 7 days, scoped to /api/auth to minimise exposure
-  res.cookie('refreshToken', refreshToken, {
+  res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     ...BASE_COOKIE_OPTIONS,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
-    path: '/api/auth',
+    path: '/api/v1/auth',
   });
 
   return { accessToken, refreshToken };
@@ -74,8 +79,8 @@ function setAuthCookies(res, userId) {
  * Clear both auth cookies on logout.
  */
 function clearAuthCookies(res) {
-  res.clearCookie('accessToken', { ...BASE_COOKIE_OPTIONS });
-  res.clearCookie('refreshToken', { ...BASE_COOKIE_OPTIONS, path: '/api/auth' });
+  res.clearCookie(ACCESS_COOKIE_NAME, { ...BASE_COOKIE_OPTIONS });
+  res.clearCookie(REFRESH_COOKIE_NAME, { ...BASE_COOKIE_OPTIONS, path: '/api/v1/auth' });
 }
 
 module.exports = {
@@ -85,4 +90,6 @@ module.exports = {
   verifyRefreshToken,
   setAuthCookies,
   clearAuthCookies,
+  ACCESS_COOKIE_NAME,
+  REFRESH_COOKIE_NAME,
 };
