@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smile, Frown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -63,9 +64,9 @@ export default function PartnerStatusWidget({ partnerName, initialPartnerStatus 
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-      className="flex flex-col items-center justify-center mt-4 w-full"
+      className="flex flex-col items-center justify-center mt-4 w-full relative z-[70]"
     >
-      <div className="flex flex-col sm:flex-row items-center gap-6 bg-ethereal-surface-dim/80 backdrop-blur-md border border-ethereal-outline/50 p-3 sm:px-6 sm:py-4 rounded-[2rem] shadow-ambient transition-all hover:border-ethereal-outline/80">
+      <div className="relative flex flex-col sm:flex-row items-center gap-6 bg-ethereal-surface-dim/80 backdrop-blur-md border border-ethereal-outline/50 p-3 sm:px-6 sm:py-4 rounded-[2rem] shadow-ambient transition-all hover:border-ethereal-outline/80">
         
         {/* Partner's Mood */}
         <div className="flex flex-col items-center gap-1.5 px-4 sm:border-r border-ethereal-outline/50">
@@ -81,7 +82,7 @@ export default function PartnerStatusWidget({ partnerName, initialPartnerStatus 
         </div>
 
         {/* My Mood Selector */}
-        <div className="flex flex-col items-center gap-1.5 px-4 relative">
+        <div className="flex flex-col items-center gap-1.5 px-4 static sm:relative">
           <span className="text-[10px] font-bold uppercase tracking-widest text-ethereal-tertiary/40">
             My Mood
           </span>
@@ -96,38 +97,45 @@ export default function PartnerStatusWidget({ partnerName, initialPartnerStatus 
             </span>
           </button>
 
-          <AnimatePresence>
-            {isSelecting && (
-              <>
-                <motion.div 
-                  initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-40" 
-                  onClick={() => setIsSelecting(false)} 
-                />
+          {typeof document !== 'undefined' && createPortal(
+            <AnimatePresence>
+              {isSelecting && (
+                <>
                   <motion.div 
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className="absolute top-full mt-3 left-1/2 -translate-x-1/2 bg-ethereal-surface border border-ethereal-primary/30 p-2 rounded-2xl shadow-xl z-50 flex gap-2 backdrop-blur-md min-w-max"
-                >
-                  {MOODS.map(mood => (
-                    <button
-                      key={mood.id}
-                      onClick={() => handleSetMood(mood.id)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
-                        user?.currentStatus === mood.id 
-                          ? 'bg-ethereal-primary/10 border border-ethereal-primary/30 shadow-sm' 
-                          : 'hover:bg-ethereal-surface-dim'
-                      }`}
-                    >
-                      <mood.icon size={18} className={mood.color} />
-                      <span className="text-xs uppercase font-bold tracking-wider text-ethereal-tertiary/80">{mood.label}</span>
-                    </button>
-                  ))}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm" 
+                    onClick={() => setIsSelecting(false)} 
+                  />
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95, y: "-50%", x: "-50%" }}
+                    animate={{ opacity: 1, scale: 1, y: "-50%", x: "-50%" }}
+                    exit={{ opacity: 0, scale: 0.95, y: "-50%", x: "-50%" }}
+                    className="fixed top-1/2 left-1/2 bg-ethereal-surface border border-ethereal-primary/30 p-6 rounded-[2rem] shadow-2xl z-[110] flex flex-col items-center gap-4 min-w-[300px]"
+                  >
+                    <h3 className="font-heading text-xl text-ethereal-tertiary mb-2">How are you feeling?</h3>
+                    <div className="flex gap-4 w-full">
+                      {MOODS.map(mood => (
+                        <button
+                          key={mood.id}
+                          onClick={() => handleSetMood(mood.id)}
+                          className={`flex-1 flex flex-col items-center gap-3 p-4 rounded-xl transition-all ${
+                            user?.currentStatus === mood.id 
+                              ? 'bg-ethereal-primary/10 border border-ethereal-primary/30 shadow-sm' 
+                              : 'hover:bg-ethereal-surface-dim border border-transparent'
+                          }`}
+                        >
+                          <mood.icon size={32} className={mood.color} />
+                          <span className="text-sm uppercase font-bold tracking-wider text-ethereal-tertiary/80">{mood.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={() => setIsSelecting(false)} className="mt-2 text-xs uppercase tracking-widest text-ethereal-tertiary/50 hover:text-ethereal-tertiary transition-colors">Cancel</button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>,
+            document.body
+          )}
         </div>
 
       </div>

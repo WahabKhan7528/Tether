@@ -42,15 +42,20 @@ export default function BottomNav() {
 
   return (
     <>
-      <div className="md:hidden fixed top-6 right-6 z-50 flex items-center gap-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 z-50 px-5 flex items-center justify-between">
+        <ThemeToggle />
+        
+        <h1 className="absolute left-1/2 -translate-x-1/2 font-serif italic text-2xl text-ethereal-primary tracking-widest drop-shadow-sm">
+          Tether
+        </h1>
+
         <button
           onClick={togglePlay}
-          className="w-10 h-10 rounded-full bg-ethereal-surface border border-ethereal-outline flex items-center justify-center text-ethereal-tertiary hover:text-ethereal-primary shadow-[0_4px_0_rgba(0,0,0,0.3)] active:shadow-none active:translate-y-1 transition-all"
+          className="w-10 h-10 rounded-full bg-ethereal-surface/80 backdrop-blur-sm border border-ethereal-outline flex items-center justify-center text-ethereal-tertiary hover:text-ethereal-primary shadow-sm active:shadow-none active:translate-y-1 transition-all"
           title={isPlaying ? 'Mute' : 'Unmute'}
         >
           {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
         </button>
-        <ThemeToggle />
       </div>
       {!shouldHideNav && (
         <div className="md:hidden fixed bottom-6 left-6 right-6 mx-auto max-w-[400px] bg-ethereal-surface-dim/90 backdrop-blur-xl border border-ethereal-outline z-50 rounded-full shadow-2xl">
