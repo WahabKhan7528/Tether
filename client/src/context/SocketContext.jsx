@@ -25,18 +25,22 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    // In production the Vercel proxy rewrites /api/* → https://tether-l3e0.onrender.com/api/*
-    // and /socket.io/* → the same backend, so we can use relative URLs.
-    // In development we talk directly to localhost:5000.
+    // Vercel is a serverless/edge platform — it CANNOT proxy WebSocket connections.
+    // The /socket.io/* rewrite in vercel.json only works for regular HTTP requests;
+    // WebSocket upgrade requests are silently dropped by Vercel's infrastructure.
+    //
+    // Fix: In production, the REST API calls go through the Vercel proxy (/api/v1/*)
+    // but Socket.IO must connect DIRECTLY to the Render backend origin.
+    const RENDER_ORIGIN = 'https://tether-l3e0.onrender.com';
     const isProd = import.meta.env.PROD;
     const apiBase = isProd
       ? '/api/v1'
       : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1');
 
-    // For Socket.IO we need an absolute origin. In production Socket.IO also
-    // goes through the Vercel proxy (same origin), so we can use window.location.origin.
+    // Socket.IO: always connect directly to Render in production (bypasses Vercel).
+    // In development connect directly to localhost.
     const serverOrigin = isProd
-      ? window.location.origin
+      ? RENDER_ORIGIN
       : new URL(apiBase).origin; // e.g. http://localhost:5000
 
     let socketInstance;
@@ -94,9 +98,8 @@ export const SocketProvider = ({ children }) => {
           toast.custom(
             (t) => (
               <div
-                className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border border-ethereal-primary/30 bg-ethereal-surface backdrop-blur-md transition-all duration-300 ${
-                  t.visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-                }`}
+                className={`flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border border-ethereal-primary/30 bg-ethereal-surface backdrop-blur-md transition-all duration-300 ${t.visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
+                  }`}
               >
                 <div className="w-10 h-10 rounded-full bg-ethereal-primary/15 flex items-center justify-center text-ethereal-primary shrink-0">
                   <Home size={18} />

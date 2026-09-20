@@ -9,18 +9,18 @@ let io;
 
 // ─── Socket event rate limiting ───────────────────────────────────────────────
 // Tracks per-socket event call counts within a rolling window.
-const RATE_WINDOW_MS   = 10_000; // 10-second rolling window
+const RATE_WINDOW_MS = 10_000; // 10-second rolling window
 const EVENT_RATE_LIMITS = {
-  status_update:       5,
-  send_hug:            3,
-  radyo_play:          10,
-  radyo_pause:         10,
-  radyo_change_track:  10,
-  radyo_seek:          20,
+  status_update: 5,
+  send_hug: 3,
+  radyo_play: 10,
+  radyo_pause: 10,
+  radyo_change_track: 10,
+  radyo_seek: 20,
   typing_letter_start: 10,
-  typing_letter_stop:  10,
-  content_updated:     10,
-  im_home:             3,
+  typing_letter_stop: 10,
+  content_updated: 10,
+  im_home: 3,
 };
 
 /**
@@ -167,9 +167,9 @@ function initSocket(server) {
       if (isRateLimited('radyo_change_track')) return;
       const safe = sanitizeSocketPayload(data);
       socket.to(room).emit('radyo_change_track', {
-        trackId:  typeof safe.trackId  === 'string' ? safe.trackId.slice(0, 100)  : undefined,
+        trackId: typeof safe.trackId === 'string' ? safe.trackId.slice(0, 100) : undefined,
         trackUrl: typeof safe.trackUrl === 'string' ? safe.trackUrl.slice(0, 500) : undefined,
-        title:    typeof safe.title    === 'string' ? safe.title.slice(0, 200)    : undefined,
+        title: typeof safe.title === 'string' ? safe.title.slice(0, 200) : undefined,
       });
     });
 
@@ -186,7 +186,7 @@ function initSocket(server) {
       if (isRateLimited('send_hug')) return;
       socket.to(room).emit('receive_hug', {
         senderName: socket.user.name,
-        senderId:   socket.user._id,
+        senderId: socket.user._id,
       });
     });
 
@@ -206,7 +206,7 @@ function initSocket(server) {
       if (isRateLimited('im_home')) return;
       socket.to(room).emit('partner_is_home', {
         senderName: socket.user.name,
-        senderId:   socket.user._id,
+        senderId: socket.user._id,
       });
     });
 
