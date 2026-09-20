@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { normalizeMediaUrlsDeep } from '../utils/normalizeMediaUrl';
 
 /**
  * Axios instance configured for Tether's cookie-based auth.
@@ -60,7 +61,14 @@ function processQueue(error) {
 }
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Rewrite any stale localhost:5000/uploads/... URLs that were persisted in the
+    // DB during local development so they resolve correctly in production.
+    if (import.meta.env.PROD && response.data) {
+      response.data = normalizeMediaUrlsDeep(response.data);
+    }
+    return response;
+  },
   async (error) => {
     const original = error.config;
 
