@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, memo } from 'react';
 import { Camera, Check, Edit2, Lock, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import LoadingSpinner from '../LoadingSpinner';
+import LoadingSpinner, { ThreeDotsLoader } from '../LoadingSpinner';
 import CustomDatePicker from '../CustomDatePicker';
 import PasswordInput from '../ui/PasswordInput';
 import { changePassword } from '../../api/profile';
@@ -261,7 +261,7 @@ export function ChangePasswordModal({ onClose }) {
             <div className="flex gap-3 pt-2">
               <button type="button" onClick={onClose} className="flex-1 py-3 text-sm font-medium rounded-full bg-ethereal-surface-dim text-ethereal-tertiary hover:opacity-80 transition-opacity">Cancel</button>
               <button type="submit" disabled={loading} className="flex-1 py-3 text-sm font-medium rounded-full bg-ethereal-tertiary text-ethereal-surface hover:opacity-90 transition-opacity">
-                {loading ? <LoadingSpinner size="sm" /> : 'Update'}
+                {loading ? <ThreeDotsLoader size="md" /> : 'Update'}
               </button>
             </div>
           </form>

@@ -102,6 +102,27 @@ api.interceptors.response.use(
       }
     }
 
+    // Handle CSRF Token Expiration/Invalidation
+    if (error.response?.status === 403 && (error.response?.data?.code === 'EBADCSRFTOKEN' || error.response?.data?.message === 'invalid csrf token') && !original._retryCsrf) {
+      original._retryCsrf = true;
+      csrfToken = null; // Clear the cached token
+      
+      return new Promise((resolve, reject) => {
+        // Fetch a new token and retry the request
+        axios.get(`${api.defaults.baseURL}/csrf-token`, { withCredentials: true })
+          .then((res) => {
+            csrfToken = res.data?.data?.csrfToken;
+            if (csrfToken) {
+              original.headers['X-CSRF-Token'] = csrfToken;
+            }
+            resolve(api(original));
+          })
+          .catch(() => {
+            reject(error); // If we can't get a new token, reject with the original error
+          });
+      });
+    }
+
     return Promise.reject(error);
   }
 );

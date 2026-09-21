@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import FallingLeaves from './FallingLeaves';
@@ -8,15 +9,12 @@ import treeCherry from '../assets/tree_cherry.png';
 import treeLavender from '../assets/tree_lavender.png';
 import treeSadLight from '../assets/tree_sad_light_v2.png';
 
-// Radyo background images
-import radyoHappyLight from '../assets/radyo_bg_happy_light.jpg';
-import radyoHappyDark from '../assets/radyo_bg_happy_dark.jpg';
-import radyoSadLight from '../assets/radyo_bg_sad_light.jpg';
-import radyoSadDark from '../assets/radyo_bg_sad_dark.jpg';
+
 
 export default function BackgroundTheme() {
   const { user } = useAuth();
   const { theme } = useTheme();
+  const location = useLocation();
 
   const isMobile = useMemo(
     () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches,
@@ -97,30 +95,7 @@ export default function BackgroundTheme() {
     }
   }
 
-  const isRadyoPage = window.location.pathname === '/radyo';
   const shouldRenderDecorations = !isMobile && !prefersReducedMotion;
-
-  if (isRadyoPage) {
-    let radyoBgSrc;
-    if (isHappy) {
-      radyoBgSrc = isDark ? radyoHappyDark : radyoHappyLight;
-    } else {
-      radyoBgSrc = isDark ? radyoSadDark : radyoSadLight;
-    }
-
-    return (
-      <>
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-          <img
-            key={radyoBgSrc}
-            src={radyoBgSrc}
-            alt="Floral Background"
-            className="absolute inset-0 w-full h-full object-cover opacity-80 will-change-auto"
-          />
-        </div>
-      </>
-    );
-  }
 
   return (
     <>

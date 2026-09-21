@@ -45,7 +45,33 @@ const PALETTE_VARS = {
 
 export default function LetterRenderer({ templateId, letter }) {
   const palette = letter?.palette || 'default';
-  const customStyles = PALETTE_VARS[palette] || {};
+  
+  let customStyles = PALETTE_VARS[palette] || {};
+  
+  if (palette.startsWith('custom_')) {
+    const [, bgHex, primaryHex] = palette.split('_');
+    if (bgHex && primaryHex) {
+      const hexToRgb = (hex) => {
+        let r = parseInt(hex.slice(0, 2), 16);
+        let g = parseInt(hex.slice(2, 4), 16);
+        let b = parseInt(hex.slice(4, 6), 16);
+        return `${r} ${g} ${b}`;
+      };
+      try {
+        const bgRgb = hexToRgb(bgHex);
+        const primaryRgb = hexToRgb(primaryHex);
+        customStyles = {
+          '--color-surface': bgRgb,
+          '--color-surface-dim': bgRgb,
+          '--color-outline': primaryRgb,
+          '--color-primary': primaryRgb,
+          '--color-tertiary': primaryRgb,
+        };
+      } catch (e) {
+        console.error('Invalid custom palette hex format');
+      }
+    }
+  }
 
   let TemplateComponent = ClassicTemplate;
   

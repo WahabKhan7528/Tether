@@ -57,7 +57,7 @@ export default function Sidebar() {
 
                 {/* Label slides in on sidebar hover */}
                 <span
-                  className="relative z-10 text-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out max-w-0 opacity-0 group-hover/sidebar:max-w-[80px] group-hover/sidebar:opacity-100 group-hover/sidebar:ml-2"
+                  className={`relative z-10 text-label whitespace-nowrap overflow-hidden transition-all duration-300 ease-in-out max-w-0 opacity-0 group-hover/sidebar:max-w-[80px] group-hover/sidebar:opacity-100 group-hover/sidebar:ml-2 ${isActive ? '!text-white' : ''}`}
                 >
                   {link.label}
                 </span>

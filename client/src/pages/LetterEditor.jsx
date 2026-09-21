@@ -10,6 +10,7 @@ import api from '../api/axios';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
+import CustomColorPicker from '../components/CustomColorPicker';
 
 const TEMPLATES = [
   { id: 'classic', label: 'Classic', desc: 'Elegant and centered' },
@@ -47,6 +48,7 @@ export default function LetterEditor() {
   const [title, setTitle] = useState('');
   const [templateId, setTemplateId] = useState('classic');
   const [palette, setPalette] = useState('default');
+  const [customColors, setCustomColors] = useState(['#F4E1D2', '#A57B5A']); // bg, primary
   const [greeting, setGreeting] = useState('');
   const [body, setBody] = useState('');
   const [closing, setClosing] = useState('');
@@ -96,7 +98,14 @@ export default function LetterEditor() {
       if (data.success) {
         setTitle(data.data.title);
         setTemplateId(data.data.templateId || 'classic');
-        setPalette(data.data.palette || 'default');
+        const loadedPalette = data.data.palette || 'default';
+        if (loadedPalette.startsWith('custom_')) {
+          setPalette('custom');
+          const [, bgHex, primaryHex] = loadedPalette.split('_');
+          setCustomColors([`#${bgHex}`, `#${primaryHex}`]);
+        } else {
+          setPalette(loadedPalette);
+        }
         setGreeting(data.data.content.greeting);
         setBody(data.data.content.body);
         setClosing(data.data.content.closing);
@@ -120,11 +129,14 @@ export default function LetterEditor() {
 
     try {
       setSaving(true);
+      const finalPalette = palette === 'custom' 
+        ? `custom_${customColors[0].replace('#', '')}_${customColors[1].replace('#', '')}`
+        : palette;
 
       const payload = {
         title,
         templateId,
-        palette,
+        palette: finalPalette,
         content: { greeting, body, closing },
         images: images.map((img, idx) => ({ ...img, order: idx }))
       };
@@ -194,7 +206,9 @@ export default function LetterEditor() {
     content: { greeting, body, closing },
     images,
     createdAt: new Date().toISOString(),
-    palette
+    palette: palette === 'custom' 
+      ? `custom_${customColors[0].replace('#', '')}_${customColors[1].replace('#', '')}`
+      : palette
   };
 
   if (loading) {
@@ -384,27 +398,50 @@ export default function LetterEditor() {
                   <p className="text-sm text-ethereal-tertiary/50">Choose a palette for your letter</p>
                 </div>
                 <div className="w-px h-12 bg-ethereal-outline/50 hidden md:block" />
-                <div className="flex flex-wrap items-center gap-4 flex-1">
-                  {PALETTES.map(p => (
-                    <button
-                      key={p.id}
-                      onClick={() => setPalette(p.id)}
-                      title={p.label}
-                      className={`flex items-center gap-3 px-2 py-2 pr-5 rounded-full border transition-all duration-300 ${palette === p.id
-                          ? 'border-ethereal-primary bg-ethereal-primary/5 shadow-md shadow-ethereal-primary/10'
-                          : 'border-transparent hover:bg-ethereal-surface/50 hover:border-ethereal-outline/50'
-                        }`}
-                    >
-                      <div className={`w-10 h-10 rounded-full flex overflow-hidden border-[2px] transition-all duration-300 ${palette === p.id ? 'border-ethereal-primary ring-2 ring-ethereal-primary/10' : 'border-transparent'
-                        }`}>
-                        <span className="flex-1 h-full" style={{ backgroundColor: p.colors[0] }} />
-                        <span className="flex-1 h-full" style={{ backgroundColor: p.colors[1] }} />
+                <div className="flex flex-col gap-4 flex-1">
+                  <div className="flex flex-wrap items-center gap-4">
+                    {[...PALETTES, { id: 'custom', label: 'Custom', colors: customColors }].map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => setPalette(p.id)}
+                        title={p.label}
+                        className={`flex items-center gap-3 px-2 py-2 pr-5 rounded-full border transition-all duration-300 ${palette === p.id
+                            ? 'border-ethereal-primary bg-ethereal-primary/5 shadow-md shadow-ethereal-primary/10'
+                            : 'border-transparent hover:bg-ethereal-surface/50 hover:border-ethereal-outline/50'
+                          }`}
+                      >
+                        <div className={`w-10 h-10 rounded-full flex overflow-hidden border-[2px] transition-all duration-300 ${palette === p.id ? 'border-ethereal-primary ring-2 ring-ethereal-primary/10' : 'border-transparent'
+                          }`}>
+                          <span className="flex-1 h-full" style={{ backgroundColor: p.colors[0] }} />
+                          <span className="flex-1 h-full" style={{ backgroundColor: p.colors[1] }} />
+                        </div>
+                        <span className={`text-sm font-medium ${palette === p.id ? 'text-ethereal-primary' : 'text-ethereal-tertiary'}`}>
+                          {p.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  
+                  {palette === 'custom' && (
+                    <div className="flex flex-col md:flex-row gap-4 mt-2 p-4 bg-ethereal-surface/30 rounded-2xl border border-ethereal-outline/30">
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-ethereal-tertiary/70 mb-2">Background Color</label>
+                        <CustomColorPicker
+                          value={customColors[0]}
+                          onChange={(color) => setCustomColors([color, customColors[1]])}
+                          palette={['#ffffff', '#f4e1d2', '#e0f2f1', '#fdf2e9', '#dad7cd', '#f4f1de', '#151515', '#2a2a2a']}
+                        />
                       </div>
-                      <span className={`text-sm font-medium ${palette === p.id ? 'text-ethereal-primary' : 'text-ethereal-tertiary'}`}>
-                        {p.label}
-                      </span>
-                    </button>
-                  ))}
+                      <div className="flex-1">
+                        <label className="block text-xs font-medium text-ethereal-tertiary/70 mb-2">Text & Accent Color</label>
+                        <CustomColorPicker
+                          value={customColors[1]}
+                          onChange={(color) => setCustomColors([customColors[0], color])}
+                          palette={['#000000', '#a57b5a', '#2b4c59', '#d96c4a', '#3a5a40', '#4a3b52', '#fafafa', '#e6e6e6']}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

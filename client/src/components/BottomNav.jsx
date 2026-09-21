@@ -45,7 +45,7 @@ export default function BottomNav() {
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 z-50 px-5 flex items-center justify-between">
         <ThemeToggle />
         
-        <h1 className="absolute left-1/2 -translate-x-1/2 font-serif italic text-2xl text-ethereal-primary tracking-widest drop-shadow-sm">
+        <h1 className="absolute left-1/2 -translate-x-1/2 font-heading font-bold italic text-2xl text-ethereal-primary tracking-widest drop-shadow-sm">
           Tether
         </h1>
 

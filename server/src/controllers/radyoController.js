@@ -30,7 +30,7 @@ exports.uploadTrack = async (req, res, next) => {
       name: track.name,
       createdAt: track.createdAt,
       updatedAt: track.updatedAt,
-      url: `/api/radyo/stream/${track._id}`,
+      url: `/radyo/stream/${track._id}`,
     };
     
     res.status(201).json({ success: true, data: formattedTrack });
@@ -52,7 +52,7 @@ exports.getTracks = async (req, res, next) => {
 
     const formattedTracks = tracks.map(track => ({
       ...track,
-      url: `/api/radyo/stream/${track._id}`,
+      url: `/radyo/stream/${track._id}`,
     }));
 
     res.status(200).json({

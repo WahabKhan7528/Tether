@@ -100,7 +100,7 @@ export default function Gallery() {
             {/* Upload to gallery directly */}
             <button
               onClick={() => setShowUpload(true)}
-              className="group relative hidden sm:flex items-center justify-center gap-3 px-8 py-4 bg-ethereal-primary text-ethereal-surface font-bold tracking-wide rounded-full overflow-hidden shadow-[0_8px_30px_rgba(var(--color-primary),0.25)] hover:shadow-[0_12px_40px_rgba(var(--color-primary),0.35)] hover:-translate-y-1 transition-all duration-400"
+              className="group relative hidden sm:flex items-center justify-center gap-3 px-8 py-4 bg-ethereal-primary text-white font-bold tracking-wide rounded-full overflow-hidden shadow-[0_8px_30px_rgba(var(--color-primary),0.25)] hover:shadow-[0_12px_40px_rgba(var(--color-primary),0.35)] hover:-translate-y-1 transition-all duration-400"
             >
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-400 ease-out rounded-full"></div>
               <Camera size={18} className="relative z-10" />

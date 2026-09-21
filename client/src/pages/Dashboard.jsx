@@ -337,7 +337,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 gap-4">
             <Link to="/memories/new" className="flex flex-row items-center justify-center gap-3 p-6 rounded-3xl bg-ethereal-primary text-white shadow-ambient transition-all hover:scale-[1.02] active:scale-[0.98] group">
               <Camera strokeWidth={2} size={22} />
-              <span className="text-label">Add Memory</span>
+              <span className="text-label text-white">Add Memory</span>
             </Link>
             <Link to="/categories" className="flex flex-row items-center justify-center gap-3 p-6 rounded-3xl bg-ethereal-surface-dim border border-ethereal-outline hover:border-ethereal-primary/50 shadow-ambient transition-all hover:-translate-y-1 group">
               <BookHeart strokeWidth={2} size={22} className="text-ethereal-primary" />
