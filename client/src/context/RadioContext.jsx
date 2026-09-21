@@ -42,15 +42,9 @@ export function RadioProvider({ children }) {
     setAudioSrc(blobUrl);
   }, []);
 
-  // Fetch track audio via authenticated Axios instance, then create a blob URL.
-  // Using a direct <audio src> cross-origin URL fails in development because
-  // the browser does NOT send SameSite=Lax cookies on cross-origin subresource
-  // requests (localhost:5173 -> localhost:5000), resulting in a silent 401.
   const loadTrackBlob = useCallback(async (track, shouldPlay) => {
     if (!track?.url) return;
 
-    // Immediately pause and clear the old source so the previous track doesn't
-    // keep playing while the new blob is being fetched.
     if (audioRef.current) {
       audioRef.current.pause();
     }
@@ -60,24 +54,33 @@ export function RadioProvider({ children }) {
     setIsPlaying(false);
     playAfterLoadRef.current = shouldPlay;
 
-    // Increment the generation counter so any in-flight request from a previous
-    // call can detect it is stale and discard its result.
     const gen = ++loadGenRef.current;
 
     try {
-      const response = await api.get(track.url, { responseType: 'blob' });
-      // Discard stale responses (e.g. user skipped tracks rapidly)
+      // track.url is a relative path like 'radyo/stream/:id'.
+      // We must build the full /api/v1/... path explicitly because:
+      //   - baseURL='/api/v1' (no trailing slash) + 'radyo/...' = '/api/v1radyo/...' (broken!)
+      //   - Using '/radyo/...' (leading slash) makes Axios ignore baseURL entirely
+      // Solution: strip any leading slash, then prepend the full API base manually.
+      const apiBase = import.meta.env.PROD
+        ? '/api/v1'
+        : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1');
+      const cleanUrl = track.url.replace(/^\//, '');
+      const streamUrl = `${apiBase}/${cleanUrl}`;
+
+      const response = await api.get(streamUrl, { responseType: 'blob' });
       if (gen !== loadGenRef.current) return;
       const blobUrl = URL.createObjectURL(response.data);
       setBlobAudioSrc(blobUrl);
     } catch (err) {
-      if (gen !== loadGenRef.current) return; // stale — ignore
+      if (gen !== loadGenRef.current) return;
       console.error('[Radyo] Failed to fetch audio blob:', err);
       setIsLoading(false);
       setIsPlaying(false);
       toast.error('Could not load audio. Please try again.');
     }
   }, [setBlobAudioSrc]);
+
 
   // Load tracks when couple changes
   useEffect(() => {

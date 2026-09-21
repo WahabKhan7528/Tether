@@ -102,13 +102,15 @@ function avatarFileFilter(_req, file, cb) {
 
 // ─── Audio upload (disk storage) ──────────────────────────────────────────────
 const AUDIO_ALLOWED_MIME = [
-  'audio/mpeg', // .mp3
-  'audio/wav',  // .wav
-  'audio/ogg',  // .ogg
-  'audio/flac', // .flac
-  'audio/aac',  // .aac
-  'audio/mp4',  // .m4a
-  'audio/x-m4a'
+  'audio/mpeg',      // .mp3
+  'audio/wav',       // .wav
+  'audio/ogg',       // .ogg
+  'audio/flac',      // .flac
+  'audio/aac',       // .aac
+  'audio/mp4',       // .m4a (standard MIME)
+  'audio/x-m4a',    // .m4a (Apple MIME)
+  'audio/webm',      // .webm audio
+  'video/mp4',       // some browsers send this for .m4a / .mp4 audio files
 ];
 const AUDIO_MAX_SIZE = 15 * 1024 * 1024; // 15 MB to fit within MongoDB 16MB BSON limit
 
