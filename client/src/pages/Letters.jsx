@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import BottomNav from '../components/BottomNav';
@@ -27,13 +27,27 @@ export default function Letters() {
     };
   }, [socket]);
 
-  const { data: letters = [], isLoading: loading } = useQuery({
+  const { 
+    data, 
+    isLoading: loading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage 
+  } = useInfiniteQuery({
     queryKey: ['letters'],
-    queryFn: async () => {
-      const res = await api.get('/letters');
-      return res.data.success ? res.data.data : [];
+    queryFn: async ({ pageParam = 1 }) => {
+      const res = await api.get(`/letters?page=${pageParam}&limit=9`);
+      return res.data;
     },
+    getNextPageParam: (lastPage) => {
+      if (!lastPage || !lastPage.pagination) return undefined;
+      const { page, totalPages } = lastPage.pagination;
+      return page < totalPages ? page + 1 : undefined;
+    }
   });
+
+  // Flatten the pages into a single array of letters
+  const letters = data?.pages.flatMap(page => page.success ? page.data : []) || [];
 
   return (
     <div className="min-h-screen pb-24 md:pb-8 bg-ethereal-surface">
@@ -101,40 +115,52 @@ export default function Letters() {
             </Link>
           </motion.div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {letters.map((letter, i) => (
-                <motion.div
-                  key={letter._id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ delay: i * 0.05 }}
-                >
-                  <Link to={`/letters/${letter._id}`}>
-                    <div className="bg-ethereal-surface-dim p-6 rounded-[2rem] border border-ethereal-outline hover:border-ethereal-primary/40 transition-all group shadow-ambient hover:shadow-xl hover:-translate-y-1">
-                      <div className="w-12 h-12 rounded-full bg-ethereal-primary/10 text-ethereal-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                        <Mail size={20} strokeWidth={1.5} />
+          <div className="flex flex-col items-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+              <AnimatePresence mode="popLayout">
+                {letters.map((letter, i) => (
+                  <motion.div
+                    key={letter._id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ delay: (i % 9) * 0.05 }}
+                  >
+                    <Link to={`/letters/${letter._id}`}>
+                      <div className="bg-ethereal-surface-dim p-6 rounded-[2rem] border border-ethereal-outline hover:border-ethereal-primary/40 transition-all group shadow-ambient hover:shadow-xl hover:-translate-y-1">
+                        <div className="w-12 h-12 rounded-full bg-ethereal-primary/10 text-ethereal-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                          <Mail size={20} strokeWidth={1.5} />
+                        </div>
+                        
+                        <h3 className="font-heading text-2xl font-medium text-ethereal-tertiary mb-2 group-hover:text-ethereal-primary transition-colors">
+                          {letter.title}
+                        </h3>
+                        
+                        <div className="flex items-center justify-between mt-6 pt-4 border-t border-ethereal-outline/50">
+                          <span className="text-xs text-ethereal-tertiary/50 uppercase tracking-wider font-semibold">
+                            {letter.templateId} template
+                          </span>
+                          <span className="text-xs font-medium text-ethereal-tertiary/60">
+                            {new Date(letter.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      
-                      <h3 className="font-heading text-2xl font-medium text-ethereal-tertiary mb-2 group-hover:text-ethereal-primary transition-colors">
-                        {letter.title}
-                      </h3>
-                      
-                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-ethereal-outline/50">
-                        <span className="text-xs text-ethereal-tertiary/50 uppercase tracking-wider font-semibold">
-                          {letter.templateId} template
-                        </span>
-                        <span className="text-xs font-medium text-ethereal-tertiary/60">
-                          {new Date(letter.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                    </Link>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+            
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="mt-12 px-8 py-3 rounded-full border border-ethereal-outline/50 bg-ethereal-surface-dim/80 text-ethereal-tertiary font-medium hover:bg-ethereal-primary/10 hover:text-ethereal-primary hover:border-ethereal-primary/30 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                {isFetchingNextPage ? 'Loading more...' : 'Load More'}
+              </button>
+            )}
           </div>
         )}
       </div>

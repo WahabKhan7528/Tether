@@ -6,6 +6,7 @@ import GalleryPicker from '../components/gallery/GalleryPicker';
 import LetterRenderer from '../components/letters/LetterRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Save, ImagePlus, Eye, Edit2, X, ArrowLeft, ArrowRight } from 'lucide-react';
+import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../api/axios';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import { toast } from 'react-hot-toast';
@@ -212,7 +213,7 @@ export default function LetterEditor() {
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
   return (

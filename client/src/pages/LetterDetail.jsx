@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import LoadingSpinner from '../components/LoadingSpinner';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import BottomNav from '../components/BottomNav';
 import LetterRenderer from '../components/letters/LetterRenderer';
@@ -52,7 +53,7 @@ export default function LetterDetail() {
     deleteMutation.mutate();
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   if (!letter) return <div className="min-h-screen flex items-center justify-center">Letter not found</div>;
 
   return (
