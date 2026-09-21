@@ -80,11 +80,6 @@ export function RadioProvider({ children }) {
 
       const blob = await response.blob();
       
-      console.log('[DEBUG] Blob fetch successful, status:', response.status);
-      console.log('[DEBUG] blob type:', typeof blob);
-      console.log('[DEBUG] is blob a Blob?', blob instanceof Blob);
-      console.log('[DEBUG] blob size:', blob.size);
-
       const blobUrl = URL.createObjectURL(blob);
       setBlobAudioSrc(blobUrl);
     } catch (err) {

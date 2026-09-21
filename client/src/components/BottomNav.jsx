@@ -1,8 +1,8 @@
-import { NavLink } from 'react-router-dom';
-import { Home, Camera, PlayCircle, Library, Mail, UserCircle, Radio, Volume2, VolumeX } from 'lucide-react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Home, Camera, PlayCircle, Library, Mail, UserCircle, Radio, Volume2, VolumeX, LogOut } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import { useRadio } from '../context/RadioContext';
-import { useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 
 const navLinks = [
@@ -17,6 +17,7 @@ const navLinks = [
 
 export default function BottomNav() {
   const { isPlaying, togglePlay } = useRadio();
+  const { logout } = useAuth();
   const location = useLocation();
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
 
@@ -49,13 +50,23 @@ export default function BottomNav() {
           Tether
         </h1>
 
-        <button
-          onClick={togglePlay}
-          className="w-10 h-10 rounded-full bg-ethereal-surface/80 backdrop-blur-sm border border-ethereal-outline flex items-center justify-center text-ethereal-tertiary hover:text-ethereal-primary shadow-sm active:shadow-none active:translate-y-1 transition-all"
-          title={isPlaying ? 'Mute' : 'Unmute'}
-        >
-          {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={togglePlay}
+            className="w-10 h-10 rounded-full bg-ethereal-surface/80 backdrop-blur-sm border border-ethereal-outline flex items-center justify-center text-ethereal-tertiary hover:text-ethereal-primary shadow-sm active:shadow-none active:translate-y-1 transition-all"
+            title={isPlaying ? 'Mute' : 'Unmute'}
+          >
+            {isPlaying ? <Volume2 size={18} /> : <VolumeX size={18} />}
+          </button>
+
+          <button
+            onClick={logout}
+            className="w-10 h-10 rounded-full bg-ethereal-surface-dim/80 backdrop-blur-sm border border-ethereal-error/20 flex items-center justify-center text-ethereal-tertiary hover:text-ethereal-error hover:bg-ethereal-error/10 shadow-sm active:shadow-none active:translate-y-1 transition-all"
+            title="Log out"
+          >
+            <LogOut size={16} />
+          </button>
+        </div>
       </div>
       {!shouldHideNav && (
         <div className="md:hidden fixed bottom-6 left-6 right-6 mx-auto max-w-[400px] bg-ethereal-surface-dim/90 backdrop-blur-xl border border-ethereal-outline z-50 rounded-full shadow-2xl">

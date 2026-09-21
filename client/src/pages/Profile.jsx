@@ -250,14 +250,6 @@ export default function Profile() {
           className="absolute inset-0 opacity-[0.2] dark:opacity-[0.08] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-ethereal-primary/60 via-ethereal-surface to-transparent pointer-events-none transition-colors duration-1000"
         />
 
-        <button 
-          onClick={logout}
-          className="md:hidden absolute top-6 right-6 p-2 rounded-full bg-ethereal-surface-dim text-ethereal-tertiary hover:text-ethereal-error hover:bg-ethereal-error/10 transition-all border border-ethereal-outline shadow-sm"
-          aria-label="Log out"
-        >
-          <LogOut size={20} />
-        </button>
-
         <AvatarPicker
           avatarUrl={user.avatarUrl}
           name={user.name}
