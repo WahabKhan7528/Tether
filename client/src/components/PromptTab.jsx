@@ -4,6 +4,7 @@ import api from '../api/axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookHeart, Send, Lock, Unlock, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
+import LoadingSpinner from './LoadingSpinner';
 
 export default function PromptTab({ partnerName }) {
   const queryClient = useQueryClient();
@@ -36,7 +37,7 @@ export default function PromptTab({ partnerName }) {
   };
 
   if (isLoading) {
-    return <div className="min-h-[50vh] flex items-center justify-center">Loading prompt...</div>;
+    return <div className="min-h-[50vh] flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
   if (!data) {

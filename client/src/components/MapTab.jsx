@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import api from '../api/axios';
 import { Link } from 'react-router-dom';
 import { MapPin, Compass } from 'lucide-react';
+import LoadingSpinner from './LoadingSpinner';
 
 // Fix for default marker icons in React Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -68,7 +69,7 @@ export default function MapTab() {
   }, [memories, gallery]);
 
   if (isLoading) {
-    return <div className="min-h-[50vh] flex items-center justify-center">Loading map...</div>;
+    return <div className="min-h-[50vh] flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
   }
 
   // Center of the world or default center if no memories
