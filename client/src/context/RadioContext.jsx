@@ -57,12 +57,35 @@ export function RadioProvider({ children }) {
     const gen = ++loadGenRef.current;
 
     try {
-      // track.url is now 'radyo/stream/:id' (without a leading slash)
-      // Since Axios baseURL is '/api/v1', api.get() will correctly resolve to
-      // '/api/v1/radyo/stream/:id'.
-      const response = await api.get(track.url, { responseType: 'blob' });
+      // Build the full API URL for the stream
+      const apiBase = import.meta.env.PROD
+        ? '/api/v1'
+        : (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1');
+      const cleanUrl = track.url.replace(/^\//, '');
+      const streamUrl = `${apiBase}/${cleanUrl}`;
+
+      // We use native `fetch` here instead of `api.get` (Axios).
+      // Reason: The browser has an extension (like a proxy or downloader) that is 
+      // intercepting XMLHttpRequest and stripping out the `responseType: 'blob'` flag,
+      // which corrupts the binary data into a string. Native fetch often bypasses these.
+      const response = await fetch(streamUrl, {
+        credentials: 'include', // Important for sending the auth cookies
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       if (gen !== loadGenRef.current) return;
-      const blobUrl = URL.createObjectURL(response.data);
+
+      const blob = await response.blob();
+      
+      console.log('[DEBUG] Blob fetch successful, status:', response.status);
+      console.log('[DEBUG] blob type:', typeof blob);
+      console.log('[DEBUG] is blob a Blob?', blob instanceof Blob);
+      console.log('[DEBUG] blob size:', blob.size);
+
+      const blobUrl = URL.createObjectURL(blob);
       setBlobAudioSrc(blobUrl);
     } catch (err) {
       if (gen !== loadGenRef.current) return;

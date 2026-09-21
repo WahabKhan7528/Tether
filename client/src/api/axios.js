@@ -64,7 +64,8 @@ api.interceptors.response.use(
   (response) => {
     // Rewrite any stale localhost:5000/uploads/... URLs that were persisted in the
     // DB during local development so they resolve correctly in production.
-    if (import.meta.env.PROD && response.data) {
+    // Ensure we skip this for Blob responses (like audio streaming) to prevent corrupting them.
+    if (import.meta.env.PROD && response.data && response.config.responseType !== 'blob' && !(response.data instanceof Blob)) {
       response.data = normalizeMediaUrlsDeep(response.data);
     }
     return response;
