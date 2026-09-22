@@ -22,7 +22,7 @@ export default function CoupleSettings({
   return (
     <div className="max-w-4xl mx-auto space-y-6 mt-4">
       {/* Hero Dashboard */}
-      <div className="p-8 rounded-2xl border border-ethereal-outline/20 shadow-sm text-center bg-white dark:bg-ethereal-surface-dim">
+      <div className="p-8 rounded-3xl border border-white/20 dark:border-white/5 shadow-xl text-center bg-white/40 dark:bg-black/20 backdrop-blur-xl">
         
         <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center mb-4 bg-ethereal-surface text-ethereal-primary">
           <Heart size={28} />
@@ -66,7 +66,7 @@ export default function CoupleSettings({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Bucket List Widget */}
-        <div className="p-6 rounded-2xl border border-ethereal-outline/20 shadow-sm bg-white dark:bg-ethereal-surface-dim h-[26rem] flex flex-col">
+        <div className="p-6 rounded-3xl border border-white/20 dark:border-white/5 shadow-xl bg-white/40 dark:bg-black/20 backdrop-blur-xl h-[26rem] flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-ethereal-surface flex items-center justify-center text-ethereal-primary">
@@ -107,7 +107,7 @@ export default function CoupleSettings({
 
         {/* Right Column: Interaction */}
         <div className="space-y-6 flex flex-col h-[26rem]">
-          <div className="flex-1 p-6 rounded-2xl border border-ethereal-outline/20 shadow-sm bg-white dark:bg-ethereal-surface-dim flex flex-col items-center justify-center relative group">
+          <div className="flex-1 p-6 rounded-3xl border border-white/20 dark:border-white/5 shadow-xl bg-white/40 dark:bg-black/20 backdrop-blur-xl flex flex-col items-center justify-center relative group">
             <button 
               onClick={handleSendHug}
               className="w-16 h-16 rounded-2xl bg-ethereal-surface text-ethereal-primary hover:bg-ethereal-primary hover:text-white flex items-center justify-center shadow-sm transform transition-all active:scale-95 mb-4 focus:outline-none focus:ring-2 focus:ring-ethereal-primary focus:ring-offset-2 dark:focus:ring-offset-ethereal-surface-dim"
@@ -132,7 +132,7 @@ export default function CoupleSettings({
       </div>
 
       {/* Milestones Widget */}
-      <div className="p-6 sm:p-8 rounded-2xl border border-ethereal-outline/20 shadow-sm bg-white dark:bg-ethereal-surface-dim">
+      <div className="p-6 sm:p-8 rounded-3xl border border-white/20 dark:border-white/5 shadow-xl bg-white/40 dark:bg-black/20 backdrop-blur-xl">
         <div className="flex items-center justify-between mb-6 border-b border-ethereal-outline/20 pb-4">
           <div className="flex items-center gap-2">
             <MapPin size={20} className="text-ethereal-primary" />
@@ -152,7 +152,7 @@ export default function CoupleSettings({
                 <div className="w-4 h-4 rounded-full bg-ethereal-surface border-2 border-ethereal-primary mt-1 flex-shrink-0" />
                 <div className="w-0.5 h-full bg-ethereal-outline/30 group-last:hidden mt-2" />
               </div>
-              <div className="flex-1 pb-6 bg-white dark:bg-ethereal-surface-dim rounded-xl p-4 border border-ethereal-outline/20 hover:border-ethereal-primary/30 transition-all -mt-3">
+              <div className="flex-1 pb-6 bg-white/40 dark:bg-black/20 backdrop-blur-xl rounded-xl p-4 border border-white/20 dark:border-white/5 hover:border-ethereal-primary/30 transition-all -mt-3">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-ethereal-tertiary text-base">{m.title}</h4>
                   <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">

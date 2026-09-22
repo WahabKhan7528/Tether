@@ -1,12 +1,45 @@
 # Tether 🔗
 
-> A private shared digital space for couples.
+> A private, secure, and shared digital space exclusively designed for couples.
+
+---
+
+## 📖 Overview
+
+Tether is an open-source, full-stack application built to give couples a dedicated, private space to document their relationship. Unlike social media platforms, Tether is strictly a two-player experience. Two users create an account, pair using a secure atomic invite code, and instantly share an isolated digital environment. 
+
+This repository contains the complete MERN-stack source code, featuring a visually stunning, animation-rich frontend and a robust, secure Express API.
+
+## ✨ Features
+
+- **Isolated Couple Environments:** Atomic joining via invite code ensures every resource is scoped strictly to two users via `coupleId`.
+- **Memories & Gallery:** Direct-to-Cloudflare R2/ImageKit media uploads for high-resolution photo sharing and a unified masonry gallery view.
+- **Interactive Map (Journey):** Memories and photos tagged with coordinates are automatically plotted on an interactive Leaflet map.
+- **Daily Prompts (Reflections):** Both partners answer daily questions; answers remain locked until both users submit.
+- **Ideas Jar (Adventures):** A physics-inspired interactive jar to store, shuffle, and randomly pick future date ideas.
+- **Scrapbook Letters:** Rich-text templates (classic, elegant, minimal, vintage, scrapbook) to write long-form letters.
+- **Shared Audio (Radyo):** A globally persistent background music player that continues across route transitions, complete with custom track uploads.
+- **Real-Time Partner Status:** Select your mood (happy/sad) and see your partner's status update instantly via WebSockets (`Socket.IO`).
+- **Saved Reels:** Save and categorize short-form video links to watch together later.
+- **Comprehensive Security:** CSRF protection (`csrf-csrf`), Helmet security headers, rate limiting, and HTTP Parameter Pollution protection.
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technologies |
+|---|---|
+| **Frontend** | React 18, Vite, React Router v6, Tailwind CSS, Framer Motion, React Query, Leaflet |
+| **Backend** | Node.js, Express 4, MongoDB, Mongoose, Socket.IO |
+| **Authentication** | bcrypt, JWT (Header Access Token + HttpOnly Refresh Cookie) |
+| **Storage & CDN** | Cloudflare R2 (via AWS SDK v3 Presigned URLs), ImageKit |
+| **Security** | Helmet, express-rate-limit, csrf-csrf, xss-clean, express-mongo-sanitize |
 
 ---
 
 ## ⚡ Quick Start — Local Development
 
-Run the entire application with **no external services required** — no Cloudflare R2, no JWT setup, no signup/login flow.
+Run the entire application locally. The system defaults to development settings (`AUTH_MODE=bypass`, `STORAGE_MODE=local`), making it easy to test without configuring external services.
 
 ### 1. Configure the server
 
@@ -21,8 +54,6 @@ Edit `server/.env` and set your MongoDB URI:
 ```env
 MONGODB_URI=mongodb://127.0.0.1:27017/tether
 ```
-
-All other values default to dev-friendly settings (`AUTH_MODE=bypass`, `STORAGE_MODE=local`).
 
 ### 2. Install dependencies
 
@@ -43,306 +74,74 @@ cd client && npm run dev
 
 ### 4. Open the app
 
-```
-http://localhost:5173
-```
-
-You will land directly on the **Dashboard** as the development user — no login required.
+Navigate to `http://localhost:5173`. In development mode (`AUTH_MODE=bypass`), you will land directly on the Dashboard as a pre-seeded development user (`dev@tether.local`).
 
 ---
 
-## Development Modes
+## 🚀 Switching to Production Configuration
 
-### `AUTH_MODE=bypass` (default in development)
-
-- No JWT tokens required
-- On startup, the server automatically creates two deterministic users:
-  - `dev@tether.local` (primary — this is you)
-  - `dev2@tether.local` (partner — makes `isPaired=true` so all couple-scoped UI works)
-- Every API request is automatically authenticated as `dev@tether.local`
-- Opening the app takes you directly to the dashboard
-
-> ⚠️ **`AUTH_MODE=bypass` must never be used in production.** The server will refuse to start if `AUTH_MODE=bypass` and `NODE_ENV=production` are both set.
-
-### `STORAGE_MODE=local` (default in development)
-
-- Uploaded images are saved to `server/uploads/memories/{memoryId}/`
-- Images are served by Express at `http://localhost:5000/uploads/...`
-- No Cloudflare account or R2 bucket required
-
-Uploaded files live at:
-```
-server/
-└── uploads/
-    └── memories/
-        └── {memoryId}/
-            ├── abc123.jpg
-            └── ...
-```
-
-> ⚠️ **`STORAGE_MODE=local` is for development/testing only.** Production should use `STORAGE_MODE=r2`.
-
----
-
-## Switching to Production Configuration
-
-When ready for production, update `server/.env`:
+When you are ready to deploy, update `server/.env` to secure the application and enable cloud storage:
 
 ```env
+NODE_ENV=production
 AUTH_MODE=jwt
 STORAGE_MODE=r2
 
+# Authentication Secrets
 JWT_ACCESS_SECRET=<64+ char random string>
 JWT_REFRESH_SECRET=<64+ char random string>
-ACCESS_TOKEN_EXPIRES_IN=15m
-REFRESH_TOKEN_EXPIRES_IN=7d
+CSRF_SECRET=<32+ char random string>
 
+# Cloudflare R2 Config
 R2_ACCOUNT_ID=your_cloudflare_account_id
 R2_ACCESS_KEY_ID=your_r2_key
 R2_SECRET_ACCESS_KEY=your_r2_secret
 R2_BUCKET_NAME=tether-media
 R2_PUBLIC_URL=https://pub-xxxx.r2.dev
+
+# ImageKit Config (For Avatars)
+IMAGEKIT_PUBLIC_KEY=your_public_key
+IMAGEKIT_PRIVATE_KEY=your_private_key
+IMAGEKIT_URL_ENDPOINT=https://ik.imagekit.io/your_id
 ```
 
-No code changes required — the storage abstraction and auth middleware handle both modes.
+No code changes are required. The storage abstraction layer (`src/services/storage`) and authentication middleware handle the transition seamlessly.
 
 ---
 
-Two people create individual accounts, pair via invite code, and from that point share one connected space — memories with photos, saved reels to recreate together, and custom categories.
-
----
-
-## Tech Stack
-
-| Layer | Choice |
-|---|---|
-| Frontend | React 18 + Vite + React Router + Axios + Tailwind CSS |
-| Backend | Node.js + Express 4 + MongoDB + Mongoose |
-| Auth | bcrypt + JWT (access token) + HttpOnly refresh token cookie |
-| File Storage | Cloudflare R2 (via AWS SDK v3 presigned URLs) |
-
----
-
-## Folder Structure
+## 🏗 Directory Structure
 
 ```
 Tether/
-├── server/                  # Express API
+├── server/                  # Node.js + Express API
 │   ├── src/
-│   │   ├── config/         # DB + R2 clients
-│   │   ├── controllers/    # Route handlers
-│   │   ├── middleware/     # auth, couple, validate, errorHandler
-│   │   ├── models/         # Mongoose schemas
+│   │   ├── config/         # DB, R2, ImageKit, Socket.IO clients
+│   │   ├── controllers/    # API Route handlers
+│   │   ├── middleware/     # Auth, Couple isolation, Validation, Security
+│   │   ├── models/         # Mongoose schemas (User, Couple, Memory, etc.)
 │   │   ├── routes/         # Express routers
-│   │   ├── utils/          # tokens, generateInviteCode, validateEnv
-│   │   └── app.js          # Express app (no listen)
-│   ├── tests/              # Jest + Supertest tests
-│   ├── .env.example
+│   │   ├── services/       # Storage abstraction (Local vs R2)
+│   │   ├── utils/          # Token generation, Env validation
+│   │   ├── app.js          # Express app configuration
+│   │   └── server.js       # Entry point & keepalive
 │   └── package.json
 │
-├── client/                  # Vite React app
+├── client/                  # React + Vite Frontend
 │   ├── src/
-│   │   ├── api/            # Axios modules per resource
-│   │   ├── components/     # Navbar, cards, ProtectedRoute, etc.
-│   │   ├── context/        # AuthContext
-│   │   ├── pages/          # Login, Signup, Pair, Dashboard, ...
-│   │   └── App.jsx         # Router
+│   │   ├── api/            # Axios instance and interceptors
+│   │   ├── components/     # UI widgets, cards, map, jar
+│   │   ├── context/        # Auth, Theme, Radio, Socket contexts
+│   │   ├── pages/          # Full page views (Dashboard, Memories, Letters)
+│   │   ├── App.jsx         # React Router configuration
+│   │   └── main.jsx        # DOM Entry
 │   └── package.json
-│
-└── README.md
 ```
 
 ---
 
-## Full Production Prerequisites
+## 🔐 Security Architecture
 
-- Node.js 18+
-- MongoDB Atlas cluster (or local MongoDB 6+)
-- Cloudflare R2 bucket with public access enabled
-
----
-
-## MongoDB Atlas Setup
-
-1. Create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas)
-2. Create a database user with read/write permissions
-3. Add your IP to the allowlist (or use `0.0.0.0/0` for development)
-4. Copy the connection string — it looks like:
-   `mongodb+srv://user:password@cluster.mongodb.net/tether`
-
----
-
-## Cloudflare R2 Setup
-
-1. Go to Cloudflare Dashboard → R2
-2. Create a bucket (e.g. `tether-media`)
-3. Enable **Public Access** on the bucket and note the public URL
-4. Create an **API Token** with Object Read & Write permissions
-5. Note your **Account ID**, **Access Key ID**, and **Secret Access Key**
-6. In R2 bucket settings, add a CORS rule:
-
-```json
-[
-  {
-    "AllowedOrigins": ["http://localhost:5173"],
-    "AllowedMethods": ["PUT"],
-    "AllowedHeaders": ["Content-Type", "Content-Length"],
-    "MaxAgeSeconds": 3000
-  }
-]
-```
-
----
-
-## Environment Variables
-
-Copy `server/.env.example` to `server/.env` and fill in all values:
-
-```env
-PORT=5000
-MONGODB_URI=mongodb+srv://...
-
-JWT_ACCESS_SECRET=<long random string, 64+ chars>
-JWT_REFRESH_SECRET=<different long random string, 64+ chars>
-
-ACCESS_TOKEN_EXPIRES_IN=15m
-REFRESH_TOKEN_EXPIRES_IN=7d
-
-R2_ACCOUNT_ID=your_cloudflare_account_id
-R2_ACCESS_KEY_ID=your_r2_access_key_id
-R2_SECRET_ACCESS_KEY=your_r2_secret_access_key
-R2_BUCKET_NAME=tether-media
-R2_PUBLIC_URL=https://pub-xxxx.r2.dev
-
-CLIENT_URL=http://localhost:5173
-NODE_ENV=development
-```
-
-> **Tip**: Generate strong JWT secrets with `node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"`
-
----
-
-## Local Development
-
-### Server
-
-```bash
-cd server
-npm install
-cp .env.example .env   # then fill in values
-npm run dev            # starts on http://localhost:5000
-```
-
-### Client
-
-```bash
-cd client
-npm install
-npm run dev            # starts on http://localhost:5173
-```
-
-Both must run simultaneously. Open `http://localhost:5173` in your browser.
-
----
-
-## API Overview
-
-### Auth
-```
-POST /api/auth/signup     Create account + couple
-POST /api/auth/login      Login
-POST /api/auth/refresh    Rotate refresh token
-POST /api/auth/logout     Clear cookie
-GET  /api/auth/me         Current user info
-```
-
-### Couples
-```
-POST /api/couples/join    Join using invite code (atomic)
-GET  /api/couples/me      Couple + partner info
-```
-
-### Categories
-```
-GET    /api/categories
-POST   /api/categories
-PATCH  /api/categories/:id
-DELETE /api/categories/:id   (nullifies refs, doesn't cascade)
-```
-
-### Memories
-```
-GET    /api/memories?page=1&limit=20&categoryId=<id>
-POST   /api/memories
-PATCH  /api/memories/:id
-DELETE /api/memories/:id   (also cleans up R2 objects)
-POST   /api/memories/:id/images/presign
-POST   /api/memories/:id/images/confirm
-```
-
-### Reels
-```
-GET    /api/reels?page=1&limit=20&categoryId=<id>&isDone=true
-POST   /api/reels
-PATCH  /api/reels/:id
-DELETE /api/reels/:id
-```
-
----
-
-## Authentication Architecture
-
-- **Signup/Login** → issue short-lived **access token** (15m) + long-lived **refresh token** (7d)
-- Access token sent as `Authorization: Bearer <token>` header
-- Refresh token stored in **HttpOnly cookie** (`path=/api/auth`) — never accessible to JS
-- On 401, the Axios interceptor automatically calls `/api/auth/refresh`, rotates the token, and retries the original request once
-- On refresh failure, fires `auth:logout` event → clears state → redirects to login
-
----
-
-## R2 Upload Architecture
-
-Images are never proxied through the Express server:
-
-```
-1. Client requests presigned PUT URL from Express
-2. Express validates memory ownership + file type + size
-3. Express generates server-side object key:
-     couples/{coupleId}/memories/{memoryId}/{uuid}-{safeFilename}
-4. Express returns presigned URL (expires in 5 minutes)
-5. Client uploads directly to R2 with PUT
-6. Client calls /confirm — Express validates the key prefix
-7. Image URL is stored in the Memory document
-```
-
----
-
-## Security Model
-
-- `coupleId` is **always** derived from `req.user.coupleId` — never trusted from client
-- Every shared-resource query: `findOne({ _id, coupleId: req.user.coupleId })`
-- Couple join is **atomic** via `findOneAndUpdate({ 'members.1': { $exists: false } })`
-- R2 object key validated server-side by prefix before confirming
-- Passwords: bcrypt with cost factor 12, `select: false` on schema
-- Helmet, CORS, rate limiting (20 req/15min on auth), body size limit (1MB)
-
----
-
-## Running Tests
-
-```bash
-cd server
-npm test
-```
-
-Requires a local MongoDB instance or set `TEST_MONGODB_URI` in your environment. Tests run in `tether_test` database and drop it after each suite.
-
----
-
-## Implementation Assumptions
-
-1. **Invite codes don't expire** in MVP. Architecture supports future regeneration — just update `Couple.inviteCode`.
-2. **MongoDB transactions** are used for signup and pairing. If your Atlas tier doesn't support transactions (Free tier does on replica sets), catch the error and fall back to sequential writes.
-3. **R2 cleanup** on memory delete is best-effort — DB deletion succeeds even if R2 cleanup fails (storage errors shouldn't fail user operations).
-4. **No real-time sync** — both partners see the same data but must refresh to see the other's changes. Real-time can be added with WebSockets in a future phase.
-5. **LetterPage** schema is fully defined and indexed, but the UI shows a "Coming soon" placeholder. The architecture is ready for `GET /api/public/letters/:slug` without auth.
+- **Strict Data Isolation:** Every database query for shared resources uses `coupleId` strictly derived from the verified JWT payload (`req.user.coupleId`). Client-provided IDs are ignored.
+- **R2 Presigned Uploads:** Files are never proxied through Node.js. The client requests a short-lived presigned URL and `PUT`s the binary directly to Cloudflare R2. The server then confirms the upload via prefix validation.
+- **Cross-Site Request Forgery (CSRF):** The `double-csrf` implementation uses a secure, HttpOnly token cookie tied to the user's session, requiring a matching `X-CSRF-Token` header for state-mutating requests.
+- **WebSocket Auth:** Socket connections require the JWT access token and map the socket directly to the authenticated user's `coupleId` room.
