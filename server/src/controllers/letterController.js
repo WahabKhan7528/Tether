@@ -112,8 +112,8 @@ async function getLetterBySlug(req, res, next) {
 
 async function createLetter(req, res, next) {
   const MAX_ATTEMPTS = 5;
-  const { title, templateId, content } = req.body;
-  // NOTE: images is intentionally excluded — letters use a separate image upload flow if added later
+  const { title, templateId, content, palette, images } = req.body;
+
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     try {
@@ -128,6 +128,8 @@ async function createLetter(req, res, next) {
         slug,
         title:     title.trim(),
         templateId: templateId || 'classic',
+        palette:   palette || 'default',
+        images:    Array.isArray(images) ? images : [],
         content: {
           greeting: encrypt(content?.greeting || ''),
           body:     encrypt(content?.body || ''),
@@ -155,12 +157,13 @@ async function createLetter(req, res, next) {
 
 async function updateLetter(req, res, next) {
   try {
-    const { title, templateId, content } = req.body;
-    // NOTE: images excluded intentionally
+    const { title, templateId, content, palette, images } = req.body;
 
     const updates = {};
     if (title !== undefined) updates.title = title.trim();
     if (templateId !== undefined) updates.templateId = templateId;
+    if (palette !== undefined) updates.palette = palette;
+    if (images !== undefined) updates.images = Array.isArray(images) ? images : [];
     if (content !== undefined) {
       updates.content = {
         greeting: encrypt(content.greeting || ''),
